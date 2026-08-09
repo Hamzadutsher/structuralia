@@ -1253,3 +1253,106 @@ table.data tbody tr:last-child td {
     padding: 18px 14px;
   }
 }
+
+/* =========================================================================
+   Modules de calcul (béton armé)
+   ========================================================================= */
+.card--ko {
+  border-color: var(--danger);
+  box-shadow: 0 0 0 3px var(--danger-bg);
+}
+
+.result-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-bottom: 4px;
+}
+.res {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+}
+.res__label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+.res__value {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+  margin-top: 2px;
+}
+.res__value--strong {
+  color: var(--primary-700);
+}
+
+.msg {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 12.5px;
+  line-height: 1.4;
+  padding: 9px 11px;
+  border-radius: var(--radius-sm);
+  margin-top: 10px;
+}
+.msg svg {
+  flex: none;
+  margin-top: 1px;
+}
+.msg--err {
+  background: var(--danger-bg);
+  color: var(--danger);
+}
+.msg--warn {
+  background: var(--warning-bg);
+  color: var(--warning);
+}
+
+table.note td,
+table.note th {
+  padding: 7px 10px;
+  font-size: 12.5px;
+}
+
+/* Coupe transversale du poteau */
+.coupe {
+  width: 100%;
+  max-width: 300px;
+  height: auto;
+  display: block;
+  margin: 4px auto 0;
+}
+.coupe__beton {
+  fill: var(--surface-2);
+  stroke: var(--text-muted);
+  stroke-width: 1.5;
+}
+.coupe__cadre {
+  fill: none;
+  stroke: var(--primary-500);
+  stroke-width: 1.4;
+  stroke-dasharray: 4 3;
+}
+.coupe__bar {
+  fill: var(--primary-700);
+  stroke: var(--surface);
+  stroke-width: 0.8;
+}
+.coupe__cote {
+  fill: var(--text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  text-anchor: middle;
+}
+.coupe__leg {
+  fill: var(--primary-700);
+  font-size: 11px;
+  font-weight: 700;
+  text-anchor: middle;
+}

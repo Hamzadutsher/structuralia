@@ -61,6 +61,8 @@ export interface Devis extends BaseEntity {
   dateValidite?: string;
   montantHT: number;
   tauxTVA: number;
+  /** Remise globale en pourcentage appliquée au total HT. */
+  remisePourcent?: number;
   montantTTC: number;
   statut: DevisStatut;
   lignes: LigneDevis[];
@@ -86,6 +88,8 @@ export interface Facture extends BaseEntity {
   dateEcheance?: string;
   montantHT: number;
   tauxTVA: number;
+  /** Remise globale en pourcentage appliquée au total HT. */
+  remisePourcent?: number;
   montantTTC: number;
   montantPaye: number;
   statut: FactureStatut;

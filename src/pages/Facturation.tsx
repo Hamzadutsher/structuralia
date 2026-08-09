@@ -99,6 +99,7 @@ const emptyDevis: Omit<Devis, 'id' | 'createdAt' | 'updatedAt'> = {
   dateValidite: '',
   montantHT: 0,
   tauxTVA: 20,
+  remisePourcent: 0,
   montantTTC: 0,
   statut: 'BROUILLON',
   lignes: [],
@@ -120,7 +121,9 @@ function DevisTab({ goToFactures }: { goToFactures: () => void }) {
 
   // Génère une facture pré-remplie à partir d'un devis.
   const facturer = (d: Devis) => {
-    const montantHT = totalHT(d.lignes) || d.montantHT;
+    const brut = totalHT(d.lignes) || d.montantHT;
+    const remise = d.remisePourcent || 0;
+    const montantHT = Math.round(brut * (1 - remise / 100));
     store.create('factures', {
       reference: `FAC-2026-${50 + data.factures.length + 1}`,
       objet: d.objet,
@@ -131,6 +134,7 @@ function DevisTab({ goToFactures }: { goToFactures: () => void }) {
       dateEcheance: '',
       montantHT,
       tauxTVA: d.tauxTVA,
+      remisePourcent: remise,
       montantTTC: Math.round(montantHT * (1 + d.tauxTVA / 100)),
       montantPaye: 0,
       statut: 'BROUILLON',
@@ -193,7 +197,8 @@ function DevisTab({ goToFactures }: { goToFactures: () => void }) {
       toast('Référence et client requis.', 'danger');
       return;
     }
-    const montantHT = totalHT(form.lignes);
+    const brut = totalHT(form.lignes);
+    const montantHT = Math.round(brut * (1 - (form.remisePourcent || 0) / 100));
     const montantTTC = Math.round(montantHT * (1 + form.tauxTVA / 100));
     const payload = { ...form, montantHT, montantTTC };
     if (editing) {
@@ -334,6 +339,10 @@ function DevisTab({ goToFactures }: { goToFactures: () => void }) {
             <input type="number" value={form.tauxTVA} onChange={(e) => set('tauxTVA', Number(e.target.value))} />
           </div>
           <div className="field">
+            <label>Remise (%)</label>
+            <input type="number" min={0} max={100} value={form.remisePourcent} onChange={(e) => set('remisePourcent', Number(e.target.value))} />
+          </div>
+          <div className="field">
             <label>Statut</label>
             <select value={form.statut} onChange={(e) => set('statut', e.target.value as DevisStatut)}>
               {DEVIS_STATUTS.map((s) => <option key={s} value={s}>{humanize(s)}</option>)}
@@ -359,7 +368,7 @@ function DevisTab({ goToFactures }: { goToFactures: () => void }) {
                 </button>
               </div>
             </div>
-            <LignesEditor value={form.lignes} onChange={(lignes) => set('lignes', lignes)} tauxTVA={form.tauxTVA} />
+            <LignesEditor value={form.lignes} onChange={(lignes) => set('lignes', lignes)} tauxTVA={form.tauxTVA} remisePourcent={form.remisePourcent} />
           </div>
           <div className="field field--full">
             <label>Notes</label>
@@ -383,6 +392,7 @@ const emptyFacture: Omit<Facture, 'id' | 'createdAt' | 'updatedAt'> = {
   dateEcheance: '',
   montantHT: 0,
   tauxTVA: 20,
+  remisePourcent: 0,
   montantTTC: 0,
   montantPaye: 0,
   statut: 'BROUILLON',
@@ -410,7 +420,8 @@ function FacturesTab() {
       setForm((f) => ({ ...f, devisId: '' }));
       return;
     }
-    const montantHT = totalHT(d.lignes) || d.montantHT;
+    const remise = d.remisePourcent || 0;
+    const montantHT = Math.round((totalHT(d.lignes) || d.montantHT) * (1 - remise / 100));
     setForm((f) => ({
       ...f,
       devisId,
@@ -419,6 +430,7 @@ function FacturesTab() {
       objet: d.objet,
       lignes: d.lignes,
       tauxTVA: d.tauxTVA,
+      remisePourcent: remise,
       montantHT,
       montantTTC: Math.round(montantHT * (1 + d.tauxTVA / 100)),
     }));
@@ -458,7 +470,8 @@ function FacturesTab() {
       toast('Référence et client requis.', 'danger');
       return;
     }
-    const montantHT = totalHT(form.lignes);
+    const brut = totalHT(form.lignes);
+    const montantHT = Math.round(brut * (1 - (form.remisePourcent || 0) / 100));
     const montantTTC = Math.round(montantHT * (1 + form.tauxTVA / 100));
     let statut = form.statut;
     if (form.montantPaye >= montantTTC && montantTTC > 0) statut = 'PAYEE';
@@ -609,6 +622,10 @@ function FacturesTab() {
             <input type="number" value={form.tauxTVA} onChange={(e) => set('tauxTVA', Number(e.target.value))} />
           </div>
           <div className="field">
+            <label>Remise (%)</label>
+            <input type="number" min={0} max={100} value={form.remisePourcent} onChange={(e) => set('remisePourcent', Number(e.target.value))} />
+          </div>
+          <div className="field">
             <label>Montant réglé (MAD)</label>
             <input type="number" value={form.montantPaye} onChange={(e) => set('montantPaye', Number(e.target.value))} />
           </div>
@@ -632,7 +649,7 @@ function FacturesTab() {
                 </button>
               </div>
             </div>
-            <LignesEditor value={form.lignes} onChange={(lignes) => set('lignes', lignes)} tauxTVA={form.tauxTVA} />
+            <LignesEditor value={form.lignes} onChange={(lignes) => set('lignes', lignes)} tauxTVA={form.tauxTVA} remisePourcent={form.remisePourcent} />
           </div>
           <div className="field field--full">
             <label>Notes</label>

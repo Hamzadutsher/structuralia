@@ -10,6 +10,7 @@ import { formatDate } from './format';
 export type PvType =
   | 'RECEPTION_COFFRAGE'
   | 'RECEPTION_FERRAILLAGE'
+  | 'BON_COULAGE'
   | 'RESERVES'
   | 'SYNTHESE'
   | 'ATTESTATION';
@@ -17,6 +18,7 @@ export type PvType =
 export const PV_LABELS: Record<PvType, string> = {
   RECEPTION_COFFRAGE: 'PV de réception de coffrage',
   RECEPTION_FERRAILLAGE: 'PV de réception de ferraillage',
+  BON_COULAGE: 'Bon de coulage',
   RESERVES: 'PV de réserves',
   SYNTHESE: 'Rapport de synthèse',
   ATTESTATION: 'Attestation de conformité / stabilité',
@@ -62,6 +64,14 @@ export interface PvData {
   designation?: string;
   references?: string;
   texte?: string;
+  // Bon de coulage
+  entreprise?: string;
+  situation?: string;
+  elements?: string;
+  dosage?: string;
+  volume?: string;
+  plan?: string;
+  heure?: string;
 }
 
 /** Points de contrôle par défaut — réception de coffrage. */
@@ -166,6 +176,29 @@ function bodyReception(d: PvData): string {
   </div>`;
 }
 
+function bodyBonCoulage(d: PvData): string {
+  const dec = d.decision ?? 'ACCORDEE';
+  return `
+  <table class="meta">
+    <tr>
+      <td><label>Entreprise</label>${escapeHtml(d.entreprise ?? '—')}</td>
+      <td><label>Situation</label>${escapeHtml(d.situation ?? '—')}</td>
+    </tr>
+    <tr>
+      <td><label>Date de la réception</label>${formatDate(d.date)}${d.heure ? ` à ${escapeHtml(d.heure)}` : ''}</td>
+      <td><label>N° de plan</label>${escapeHtml(d.plan ?? '—')}</td>
+    </tr>
+    <tr>
+      <td><label>Dosage / classe du béton</label>${escapeHtml(d.dosage ?? '—')}</td>
+      <td><label>Volume de béton</label>${escapeHtml(d.volume ?? '—')}</td>
+    </tr>
+  </table>
+  <p class="intro">Il a été procédé ce jour à la réception du <b>coffrage et ferraillage</b> de ${escapeHtml(d.elements || d.ouvrage || '…')}, par le bureau d'études STRUCTURALIA.</p>
+  <p>Le coffrage et le ferraillage sont <b>conformes aux plans de béton armé</b>.</p>
+  <div class="decision" style="border-color:${DECISION_COLOR[dec]};color:${DECISION_COLOR[dec]}">${DECISION_LABEL[dec]}</div>
+  <div class="notes"><b>N.B. :</b> le béton doit être convenablement vibré et respecter le dosage prescrit${d.dosage ? ` (${escapeHtml(d.dosage)})` : ''}.</div>`;
+}
+
 function bodyReserves(d: PvData): string {
   const rows = (d.reserves ?? [])
     .map(
@@ -212,6 +245,8 @@ function body(d: PvData): string {
     case 'RECEPTION_COFFRAGE':
     case 'RECEPTION_FERRAILLAGE':
       return bodyReception(d);
+    case 'BON_COULAGE':
+      return bodyBonCoulage(d);
     case 'RESERVES':
       return bodyReserves(d);
     case 'SYNTHESE':

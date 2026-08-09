@@ -61,6 +61,17 @@ export const NAV: NavCategory[] = [
     ],
   },
   {
+    title: 'Études & calculs',
+    icon: 'building',
+    groups: [
+      {
+        title: 'Béton armé (BAEL)',
+        icon: 'building',
+        links: [{ to: '/calcul/poteau', label: 'Poteau', icon: 'building' }],
+      },
+    ],
+  },
+  {
     title: 'Administration',
     links: [{ to: '/membres', label: 'Membres & rôles', icon: 'settings', perm: 'canManageMembers' }],
   },
@@ -77,4 +88,5 @@ export const PAGE_TITLES: Record<string, string> = {
   '/chantiers': 'Projets',
   '/suivi': 'Suivi des travaux',
   '/membres': 'Membres & rôles',
+  '/calcul/poteau': 'Poteau BA — BAEL 91',
 };

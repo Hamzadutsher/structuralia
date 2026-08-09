@@ -12,14 +12,21 @@ export function LignesEditor({
   value,
   onChange,
   tauxTVA,
+  remisePourcent = 0,
 }: {
   value: LigneDevis[];
   onChange: (lignes: LigneDevis[]) => void;
   tauxTVA: number;
+  remisePourcent?: number;
 }) {
   const lignes = value ?? [];
-  const ht = totalHT(lignes);
+  const brut = totalHT(lignes);
+  const remise = brut * ((remisePourcent || 0) / 100);
+  const ht = brut - remise;
   const tva = ht * (tauxTVA / 100);
+
+  // Numérotation continue des lignes dans l'ordre d'affichage.
+  const numero: Record<number, number> = {};
 
   const update = (i: number, patch: Partial<LigneDevis>) =>
     onChange(lignes.map((l, idx) => (idx === i ? { ...l, ...patch } : l)));
@@ -35,6 +42,15 @@ export function LignesEditor({
     const s = l.section ?? '';
     if (!sections.includes(s)) sections.push(s);
   });
+  let _n = 0;
+  sections.forEach((sec) =>
+    lignes.forEach((l, i) => {
+      if ((l.section ?? '') === sec) {
+        _n++;
+        numero[i] = _n;
+      }
+    }),
+  );
 
   return (
     <div className="lignes">
@@ -42,6 +58,7 @@ export function LignesEditor({
         <table className="data lignes-table">
           <thead>
             <tr>
+              <th style={{ width: 34 }}>N°</th>
               <th>Désignation</th>
               <th style={{ width: 60 }}>Unité</th>
               <th style={{ width: 90 }}>Qté</th>
@@ -53,7 +70,7 @@ export function LignesEditor({
           <tbody>
             {lignes.length === 0 && (
               <tr>
-                <td colSpan={6} className="cell-sub" style={{ textAlign: 'center', padding: 16 }}>
+                <td colSpan={7} className="cell-sub" style={{ textAlign: 'center', padding: 16 }}>
                   Aucune ligne — ajoutez une prestation ou chargez le modèle BET.
                 </td>
               </tr>
@@ -63,7 +80,7 @@ export function LignesEditor({
               return (
                 <Fragment key={sec || '__none__'}>
                   <tr className="lignes-sec">
-                    <td colSpan={5}>
+                    <td colSpan={6}>
                       <input
                         className="lignes-sec__input"
                         value={sec}
@@ -84,6 +101,7 @@ export function LignesEditor({
                   </tr>
                   {items.map(({ l, i }) => (
                     <tr key={i}>
+                      <td className="cell-sub" style={{ textAlign: 'center' }}>{numero[i]}</td>
                       <td>
                         <input
                           className="ligne-input"
@@ -144,6 +162,18 @@ export function LignesEditor({
         </div>
         <table className="totaux-mini">
           <tbody>
+            {remise > 0 && (
+              <>
+                <tr>
+                  <td>Total brut HT</td>
+                  <td className="num">{eur(brut)}</td>
+                </tr>
+                <tr>
+                  <td>Remise ({remisePourcent} %)</td>
+                  <td className="num">− {eur(remise)}</td>
+                </tr>
+              </>
+            )}
             <tr>
               <td>Total HT</td>
               <td className="num">{eur(ht)}</td>

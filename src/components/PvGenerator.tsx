@@ -16,6 +16,7 @@ import { humanize } from '@/lib/format';
 const PV_PREFIX: Record<PvType, string> = {
   RECEPTION_COFFRAGE: 'PV-COF',
   RECEPTION_FERRAILLAGE: 'PV-FER',
+  BON_COULAGE: 'BC',
   RESERVES: 'PV-RES',
   SYNTHESE: 'RS',
   ATTESTATION: 'ATT',
@@ -24,6 +25,7 @@ const PV_PREFIX: Record<PvType, string> = {
 const PV_CATEGORIE: Record<PvType, DocumentCategorie> = {
   RECEPTION_COFFRAGE: 'RAPPORT',
   RECEPTION_FERRAILLAGE: 'RAPPORT',
+  BON_COULAGE: 'RAPPORT',
   RESERVES: 'RAPPORT',
   SYNTHESE: 'RAPPORT',
   ATTESTATION: 'ADMINISTRATIF',
@@ -82,6 +84,14 @@ export function PvGenerator({
   const [designation, setDesignation] = useState('');
   const [references, setReferences] = useState('BAEL 91 / Eurocodes / RPS 2011');
   const [texte, setTexte] = useState('');
+  // Bon de coulage
+  const [entreprise, setEntreprise] = useState('');
+  const [situation, setSituation] = useState('');
+  const [elements, setElements] = useState('');
+  const [dosage, setDosage] = useState('B25 / 350 kg/m³');
+  const [volume, setVolume] = useState('');
+  const [plan, setPlan] = useState('');
+  const [heure, setHeure] = useState('');
 
   const chantier = chantiers.find((c) => c.id === chantierId);
   const client = clients.find((c) => c.id === chantier?.clientId);
@@ -114,7 +124,7 @@ export function PvGenerator({
     date,
     controleur: controleur || chantier?.chefProjet || '',
     items: isReception ? items : undefined,
-    decision: isReception ? decision : undefined,
+    decision: isReception || type === 'BON_COULAGE' ? decision : undefined,
     observations: observations || undefined,
     reserves: type === 'RESERVES' ? reserves.filter((r) => r.description.trim()) : undefined,
     periode: type === 'SYNTHESE' ? periode : undefined,
@@ -125,6 +135,13 @@ export function PvGenerator({
     designation: type === 'ATTESTATION' ? designation : undefined,
     references: type === 'ATTESTATION' ? references : undefined,
     texte: type === 'ATTESTATION' ? texte : undefined,
+    entreprise: type === 'BON_COULAGE' ? entreprise : undefined,
+    situation: type === 'BON_COULAGE' ? situation : undefined,
+    elements: type === 'BON_COULAGE' ? elements : undefined,
+    dosage: type === 'BON_COULAGE' ? dosage : undefined,
+    volume: type === 'BON_COULAGE' ? volume : undefined,
+    plan: type === 'BON_COULAGE' ? plan : undefined,
+    heure: type === 'BON_COULAGE' ? heure : undefined,
   });
 
   const generate = () => {
@@ -259,6 +276,48 @@ export function PvGenerator({
             <label>Observations générales</label>
             <textarea value={observations} onChange={(e) => setObservations(e.target.value)} />
           </div>
+        )}
+
+        {/* --- Bon de coulage --- */}
+        {type === 'BON_COULAGE' && (
+          <>
+            <div className="field">
+              <label>Entreprise</label>
+              <input value={entreprise} onChange={(e) => setEntreprise(e.target.value)} placeholder="Ex. Société ENTEG SARL" />
+            </div>
+            <div className="field">
+              <label>Situation</label>
+              <input value={situation} onChange={(e) => setSituation(e.target.value)} placeholder="Ex. Poste N°1 / Niveau R+1" />
+            </div>
+            <div className="field field--full">
+              <label>Éléments réceptionnés (coffrage + ferraillage)</label>
+              <textarea value={elements} onChange={(e) => setElements(e.target.value)} placeholder="Ex. semelles, chaînage inférieur et fût de poteaux…" />
+            </div>
+            <div className="field">
+              <label>Dosage / classe du béton</label>
+              <input value={dosage} onChange={(e) => setDosage(e.target.value)} />
+            </div>
+            <div className="field">
+              <label>Volume de béton</label>
+              <input value={volume} onChange={(e) => setVolume(e.target.value)} placeholder="Ex. 12 m³" />
+            </div>
+            <div className="field">
+              <label>N° de plan</label>
+              <input value={plan} onChange={(e) => setPlan(e.target.value)} placeholder="Ex. BA-04-COF-02" />
+            </div>
+            <div className="field">
+              <label>Heure de réception</label>
+              <input type="time" value={heure} onChange={(e) => setHeure(e.target.value)} />
+            </div>
+            <div className="field">
+              <label>Décision de bétonnage</label>
+              <select value={decision} onChange={(e) => setDecision(e.target.value as PvData['decision'])}>
+                <option value="ACCORDEE">Coulage autorisé</option>
+                <option value="SOUS_RESERVES">Autorisé sous réserves</option>
+                <option value="REFUSEE">Coulage refusé</option>
+              </select>
+            </div>
+          </>
         )}
 
         {/* --- PV de réserves --- */}

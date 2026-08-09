@@ -65,6 +65,7 @@ const schema = a.schema({
       dateValidite: a.date(),
       montantHT: a.float(),
       tauxTVA: a.float(),
+      remisePourcent: a.float(),
       montantTTC: a.float(),
       statut: a.enum(['BROUILLON', 'ENVOYE', 'ACCEPTE', 'REFUSE', 'EXPIRE']),
       // Lignes de prestation sérialisées en JSON
@@ -88,6 +89,7 @@ const schema = a.schema({
       dateEcheance: a.date(),
       montantHT: a.float(),
       tauxTVA: a.float(),
+      remisePourcent: a.float(),
       montantTTC: a.float(),
       montantPaye: a.float(),
       statut: a.enum(['BROUILLON', 'ENVOYEE', 'PAYEE', 'PARTIELLE', 'EN_RETARD', 'ANNULEE']),

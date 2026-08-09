@@ -18,6 +18,7 @@ interface DocLike {
   dateValidite?: string;
   montantHT: number;
   tauxTVA: number;
+  remisePourcent?: number;
   montantTTC: number;
   lignes: LigneDevis[];
   notes?: string;
@@ -62,7 +63,10 @@ function renderLignes(doc: DocLike): { rows: string; ht: number } {
 function buildHtml(kind: Kind, doc: DocLike, client?: Client): string {
   const title = kind === 'devis' ? 'DEVIS' : 'FACTURE';
   const { rows, ht } = renderLignes(doc);
-  const htFinal = ht || doc.montantHT;
+  const brut = ht || doc.montantHT;
+  const remisePct = doc.remisePourcent || 0;
+  const remise = brut * (remisePct / 100);
+  const htFinal = brut - remise;
   const tva = htFinal * (doc.tauxTVA / 100);
   const ttc = htFinal + tva;
   const dateLabel = kind === 'devis' ? 'Validité' : 'Échéance';
@@ -161,6 +165,8 @@ function buildHtml(kind: Kind, doc: DocLike, client?: Client): string {
   </table>
 
   <table class="totaux">
+    ${remisePct > 0 ? `<tr><td class="lbl">Total brut HT</td><td class="num">${eur(brut)}</td></tr>
+    <tr><td class="lbl">Remise (${remisePct} %)</td><td class="num">− ${eur(remise)}</td></tr>` : ''}
     <tr><td class="lbl">Total HT</td><td class="num">${eur(htFinal)}</td></tr>
     <tr><td class="lbl">TVA (${doc.tauxTVA} %)</td><td class="num">${eur(tva)}</td></tr>
     <tr class="ttc"><td>Total TTC</td><td class="num">${eur(ttc)}</td></tr>
