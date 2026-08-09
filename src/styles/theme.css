@@ -855,7 +855,7 @@ table.data tbody tr:last-child td {
   animation: pop 0.18s ease;
 }
 .modal--lg {
-  max-width: 760px;
+  max-width: 880px;
 }
 .modal__head {
   display: flex;
@@ -1100,12 +1100,36 @@ table.data tbody tr:last-child td {
 .ligne-input.num {
   text-align: right;
 }
+.ligne-input.center {
+  text-align: center;
+}
 .ligne-input:focus {
   border-color: var(--primary-400);
   box-shadow: 0 0 0 3px var(--primary-100);
 }
-.lignes-table td .num {
+.lignes-table td.num {
   text-align: right;
+}
+/* En-tête de mission dans l'éditeur de lignes */
+.lignes-table tr.lignes-sec td {
+  background: #e6f5f2;
+  padding: 4px 8px;
+}
+.lignes-sec__input {
+  width: 100%;
+  border: none;
+  background: transparent;
+  color: var(--primary-700);
+  font-weight: 800;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 4px 2px;
+  outline: none;
+}
+.lignes-sec__input::placeholder {
+  color: var(--primary-400);
+  font-weight: 600;
 }
 .totaux-mini {
   border-collapse: collapse;
