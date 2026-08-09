@@ -1,0 +1,3 @@
+{
+  "_comment": "Placeholder — remplacé automatiquement par `ampx generate outputs` lors du déploiement du backend Amplify. Tant que ce fichier ne contient pas de clé 'auth', l'application fonctionne en mode démo local (localStorage)."
+}
