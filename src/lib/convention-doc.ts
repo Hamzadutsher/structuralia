@@ -2,6 +2,7 @@ import type { Client, Convention } from './types';
 import { printHtml, escapeHtml } from './pdf';
 import { eur, formatDate } from './format';
 import { COMPANY, COMPANY_LEGAL_FOOTER, COMPANY_CONTACT_FOOTER } from './company';
+import { LETTERHEAD_LOGO } from './letterhead';
 import { ECHEANCIER_HONORAIRES } from './catalog';
 
 /**
@@ -62,9 +63,8 @@ export function exportConventionPdf(conv: Convention, client?: Client) {
   body { font-family: 'Segoe UI', Arial, sans-serif; color: #1e2a30; margin: 0; padding: 40px 46px; font-size: 12px; line-height: 1.55; }
   .band { border-bottom: 3px solid #14b8a6; padding-bottom: 12px; margin-bottom: 18px; }
   .band .co { display: flex; gap: 12px; align-items: center; }
-  .logo { width: 44px; height: 44px; border-radius: 10px; background: #14b8a6; color: #fff; display: grid; place-items: center; font-weight: 800; font-size: 20px; }
-  .band b { font-size: 18px; color: #0f766e; letter-spacing: 1px; }
-  .band .act { font-size: 10px; color: #64757e; }
+  .logo-img { height: 46px; width: auto; display: block; }
+  .band .act { font-size: 9px; color: #64757e; font-weight: 700; margin-top: 3px; }
   h1.t { text-align: center; color: #0f766e; font-size: 16px; margin: 6px 0 2px; letter-spacing: .5px; }
   .projet { text-align: center; font-weight: 700; margin-bottom: 16px; }
   h2 { font-size: 12.5px; color: #0f766e; margin: 16px 0 6px; border-bottom: 1px solid #e4e9ec; padding-bottom: 3px; }
@@ -94,8 +94,8 @@ export function exportConventionPdf(conv: Convention, client?: Client) {
 <body>
   <div class="band">
     <div class="co">
-      <div class="logo">S</div>
-      <div><b>${escapeHtml(COMPANY.nom)}</b><div class="act">${escapeHtml(COMPANY.activite)}</div></div>
+      <img class="logo-img" src="${LETTERHEAD_LOGO}" alt="STRUCTURALIA" />
+      <div class="act">${escapeHtml(COMPANY.activite.toUpperCase())}</div>
     </div>
   </div>
 

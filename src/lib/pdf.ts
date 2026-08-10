@@ -1,6 +1,7 @@
 import type { Client, Devis, Facture, LigneDevis } from './types';
 import { eur, formatDate } from './format';
 import { COMPANY, COMPANY_LEGAL_FOOTER, COMPANY_CONTACT_FOOTER } from './company';
+import { LETTERHEAD_LOGO } from './letterhead';
 
 /**
  * Génère un document imprimable (devis ou facture) et ouvre la boîte
@@ -86,11 +87,10 @@ function buildHtml(kind: Kind, doc: DocLike, client?: Client): string {
   * { box-sizing: border-box; }
   body { font-family: 'Segoe UI', Arial, sans-serif; color: #1e2a30; margin: 0; padding: 36px 42px; font-size: 12.5px; }
   .head { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #14b8a6; padding-bottom: 16px; margin-bottom: 18px; gap: 20px; }
-  .brand { display: flex; gap: 12px; align-items: flex-start; max-width: 62%; }
-  .logo { width: 46px; height: 46px; border-radius: 10px; background: #14b8a6; color: #fff; display: grid; place-items: center; font-weight: 800; font-size: 22px; flex-shrink: 0; }
-  .brand b { font-size: 20px; letter-spacing: 1px; color: #0f766e; }
-  .brand .act { font-size: 10.5px; color: #1e2a30; font-weight: 600; margin-top: 2px; }
-  .brand .spec { font-size: 9px; color: #64757e; margin-top: 2px; line-height: 1.35; }
+  .brand { display: flex; flex-direction: column; gap: 3px; max-width: 62%; }
+  .logo-img { height: 46px; width: auto; display: block; margin-bottom: 4px; }
+  .brand .act { font-size: 10.5px; color: #1e2a30; font-weight: 700; }
+  .brand .spec { font-size: 8.5px; color: #64757e; line-height: 1.35; }
   .doc-title { text-align: right; flex-shrink: 0; }
   .doc-title h1 { margin: 0; color: #0f766e; font-size: 24px; letter-spacing: 2px; }
   .doc-title .ref { font-size: 14px; font-weight: 700; margin-top: 4px; }
@@ -120,12 +120,9 @@ function buildHtml(kind: Kind, doc: DocLike, client?: Client): string {
 <body>
   <div class="head">
     <div class="brand">
-      <div class="logo">S</div>
-      <div>
-        <b>${escapeHtml(COMPANY.nom)}</b>
-        <div class="act">${escapeHtml(COMPANY.activite)}</div>
-        <div class="spec">${escapeHtml(COMPANY.specialites)}</div>
-      </div>
+      <img class="logo-img" src="${LETTERHEAD_LOGO}" alt="STRUCTURALIA" />
+      <div class="act">${escapeHtml(COMPANY.activite.toUpperCase())}</div>
+      <div class="spec">${escapeHtml(COMPANY.specialites)}</div>
     </div>
     <div class="doc-title">
       <h1>${title}</h1>

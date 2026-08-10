@@ -145,7 +145,7 @@ export function Topbar({ title, onToggleSidebar, userName, onLogout }: Props) {
         value={role}
         onChange={(e) => setRole(e.target.value as Role)}
         disabled={fromBackend}
-        title={fromBackend ? 'Rôle défini par Cognito' : 'Changer de rôle (démo)'}
+        title={fromBackend ? 'Rôle défini par Cognito' : 'Changer de rôle'}
         aria-label="Rôle"
       >
         {ROLES.map((r) => (

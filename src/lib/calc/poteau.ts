@@ -35,6 +35,8 @@ export interface PoteauInput {
   gammaS: number;
   /** Diamètre des aciers longitudinaux retenu (mm). */
   phiL: number;
+  /** Enrobage du béton (parement → nu du cadre), cm. Sert au dessin / DXF. */
+  enrob: number;
 }
 
 export interface Etape {
@@ -74,11 +76,32 @@ export interface PoteauResult {
   NuLim: number; // effort normal ultime résistant de la section retenue (kN)
 }
 
+import type { SectionSpec } from './section';
+
 const DIAM_STD = [6, 8, 10, 12, 14, 16, 20, 25, 32, 40];
 
 /** Aire d'une barre de diamètre phi (mm) en cm². */
 export function aireBarre(phiMm: number): number {
   return (Math.PI * phiMm * phiMm) / 4 / 100;
+}
+
+/** Spécification géométrique de la section (dessin / DXF) pour un poteau comprimé. */
+export function specPoteau(inp: PoteauInput, res: PoteauResult): SectionSpec {
+  const legende =
+    inp.forme === 'circ'
+      ? `${res.nBarres} HA${inp.phiL} · cerces Ø${res.phiT}`
+      : `${res.nBarres} HA${inp.phiL} · cadres Ø${res.phiT}`;
+  return {
+    forme: inp.forme,
+    width: Math.max(inp.a, inp.b), // grand côté à l'horizontale
+    height: Math.min(inp.a, inp.b),
+    D: inp.D,
+    enrob: inp.enrob,
+    phiL: inp.phiL,
+    phiT: res.phiT,
+    arr: { type: 'perimetre', n: res.nBarres },
+    legende,
+  };
 }
 
 function fmt(x: number, d = 2): string {

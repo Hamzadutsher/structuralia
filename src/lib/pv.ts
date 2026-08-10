@@ -1,5 +1,7 @@
 import { printHtml, escapeHtml } from './pdf';
 import { formatDate } from './format';
+import { LETTERHEAD_LOGO } from './letterhead';
+import { COMPANY, COMPANY_LEGAL_FOOTER, COMPANY_CONTACT_FOOTER } from './company';
 
 /**
  * Génération des documents de contrôle du bureau d'études (phase suivi de chantier) :
@@ -130,8 +132,8 @@ function header(d: PvData): string {
   return `
   <div class="head">
     <div class="brand">
-      <div class="logo">S</div>
-      <div><b>STRUCTURALIA</b><small>Bureau d'études techniques</small></div>
+      <img class="logo-img" src="${LETTERHEAD_LOGO}" alt="STRUCTURALIA" />
+      <div><small>${escapeHtml(COMPANY.activite.toUpperCase())}</small></div>
     </div>
     <div class="doc-title">
       <h1>${escapeHtml(PV_LABELS[d.type].toUpperCase())}</h1>
@@ -264,9 +266,8 @@ function buildHtml(d: PvData): string {
   body { font-family: 'Segoe UI', Arial, sans-serif; color: #1e2a30; margin: 0; padding: 42px 48px; font-size: 12.5px; line-height: 1.55; }
   .head { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #14b8a6; padding-bottom: 18px; margin-bottom: 20px; }
   .brand { display: flex; gap: 12px; align-items: center; }
-  .logo { width: 44px; height: 44px; border-radius: 10px; background: #14b8a6; color: #fff; display: grid; place-items: center; font-weight: 800; font-size: 21px; }
-  .brand b { font-size: 19px; letter-spacing: 1px; }
-  .brand small { color: #64757e; display: block; }
+  .logo-img { height: 44px; width: auto; display: block; margin-bottom: 3px; }
+  .brand small { color: #64757e; display: block; font-size: 8.5px; font-weight: 700; max-width: 320px; }
   .doc-title { text-align: right; max-width: 300px; }
   .doc-title h1 { margin: 0; color: #0f766e; font-size: 17px; letter-spacing: 1px; }
   .doc-title .ref { font-size: 14px; font-weight: 700; margin-top: 4px; }
@@ -298,7 +299,7 @@ function buildHtml(d: PvData): string {
     <div><label>Pour l'entreprise / le client</label><div class="line">Nom, date et signature</div></div>
     <div><label>Le contrôleur — STRUCTURALIA</label><div class="line">${escapeHtml(d.controleur ?? '')}</div></div>
   </div>
-  <div class="foot">STRUCTURALIA — Document établi le ${formatDate(d.date)} · ${escapeHtml(PV_LABELS[d.type])} · ${escapeHtml(d.reference)}</div>
+  <div class="foot">${escapeHtml(PV_LABELS[d.type])} · ${escapeHtml(d.reference)} · établi le ${formatDate(d.date)}<br>${escapeHtml(COMPANY_LEGAL_FOOTER)}<br>${escapeHtml(COMPANY_CONTACT_FOOTER)}</div>
 </body></html>`;
 }
 

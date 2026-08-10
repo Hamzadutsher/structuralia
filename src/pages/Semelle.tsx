@@ -2,71 +2,61 @@ import { useMemo, useState } from 'react';
 import { PageHead } from '@/components/ui/Page';
 import { Icon } from '@/components/ui/Icon';
 import { useData } from '@/lib/store';
-import {
-  calculPoteauBAEL,
-  aireBarre,
-  specPoteau,
-  type PoteauInput,
-  type SectionForme,
-  type AgeCharges,
-} from '@/lib/calc/poteau';
-import { buildCoupeSvg } from '@/lib/calc/coupe';
-import { exportPoteauNotePdf } from '@/lib/calc/notePdf';
-import { buildCoupeDxf, downloadDxf } from '@/lib/calc/dxf';
+import { calculSemelle, planSemelle, type SemelleInput } from '@/lib/calc/semelle';
+import { buildSemellePlanSvg } from '@/lib/calc/coupe';
+import { exportSemelleNotePdf } from '@/lib/calc/notePdf';
+import { buildSemelleDxf, downloadDxf } from '@/lib/calc/dxf';
 
-/** Valeurs par défaut d'un poteau courant de bâtiment. */
-const DEFAULT: PoteauInput = {
-  forme: 'rect',
+const DEFAULT: SemelleInput = {
   a: 25,
   b: 25,
-  D: 30,
-  l0: 3,
-  k: 0.7,
   Nu: 900,
+  Nser: 650,
+  sigmaSol: 0.2,
   fc28: 25,
   fe: 500,
-  age: 'apres90j',
   gammaB: 1.5,
   gammaS: 1.15,
+  enrob: 5,
   phiL: 12,
-  enrob: 3,
+  gammaBeton: 25,
 };
 
-const DIAM_L = [12, 14, 16, 20, 25, 32];
+const DIAM_L = [10, 12, 14, 16, 20];
 
-export default function Poteau() {
+export default function Semelle() {
   const data = useData();
-  const [inp, setInp] = useState<PoteauInput>(DEFAULT);
+  const [inp, setInp] = useState<SemelleInput>(DEFAULT);
   const [repere, setRepere] = useState('');
   const [projetId, setProjetId] = useState('');
-  const res = useMemo(() => calculPoteauBAEL(inp), [inp]);
+  const res = useMemo(() => calculSemelle(inp), [inp]);
 
-  const set = <K extends keyof PoteauInput>(key: K, value: PoteauInput[K]) =>
+  const set = <K extends keyof SemelleInput>(key: K, value: SemelleInput[K]) =>
     setInp((s) => ({ ...s, [key]: value }));
-  const num = <K extends keyof PoteauInput>(key: K) => (e: React.ChangeEvent<HTMLInputElement>) =>
-    set(key, (parseFloat(e.target.value) || 0) as PoteauInput[K]);
+  const num = <K extends keyof SemelleInput>(key: K) => (e: React.ChangeEvent<HTMLInputElement>) =>
+    set(key, (parseFloat(e.target.value) || 0) as SemelleInput[K]);
 
-  const spec = specPoteau(inp, res);
+  const plan = planSemelle(inp, res);
   const projetNom = data.chantiers.find((c) => c.id === projetId)?.nom;
-  const nomFichier = `Poteau_${(repere.trim() || 'element').replace(/[^\w-]+/g, '_')}`;
+  const nomFichier = `Semelle_${(repere.trim() || 'element').replace(/[^\w-]+/g, '_')}`;
 
   const exportPdf = () =>
-    exportPoteauNotePdf(inp, res, { repere: repere.trim() || undefined, projet: projetNom });
+    exportSemelleNotePdf(inp, res, { repere: repere.trim() || undefined, projet: projetNom });
   const exportDxf = () =>
     downloadDxf(
       nomFichier,
-      buildCoupeDxf(spec, { titre: `POTEAU ${repere.trim() || ''}`.trim(), legende: spec.legende }),
+      buildSemelleDxf(plan, { titre: `SEMELLE ${repere.trim() || ''}`.trim(), legende: plan.legende }),
     );
 
   return (
     <>
       <PageHead
-        title="Poteau BA — compression centrée"
-        subtitle="Dimensionnement selon BAEL 91 révisé 99 (Art. B.8.4)"
+        title="Semelle isolée — méthode des bielles"
+        subtitle="Dimensionnement selon BAEL 91 révisé 99 (semelle rigide)"
         actions={
           <>
             <button className="btn btn--ghost" onClick={exportDxf}>
-              <Icon name="download" size={16} /> Coupe DXF
+              <Icon name="download" size={16} /> Plan DXF
             </button>
             <button className="btn btn--primary" onClick={exportPdf}>
               <Icon name="download" size={16} /> Note de calcul PDF
@@ -76,7 +66,7 @@ export default function Poteau() {
       />
 
       <div className="split" style={{ alignItems: 'start' }}>
-        {/* ------------------------------------------------ Colonne de saisie */}
+        {/* ------------------------------------------------ Saisie */}
         <div className="card card--pad">
           <div className="section-title">
             <Icon name="edit" size={18} /> Données
@@ -85,12 +75,7 @@ export default function Poteau() {
           <div className="form-grid">
             <div className="field">
               <label>Repère de l'élément</label>
-              <input
-                type="text"
-                value={repere}
-                onChange={(e) => setRepere(e.target.value)}
-                placeholder="ex. P1 — RDC"
-              />
+              <input type="text" value={repere} onChange={(e) => setRepere(e.target.value)} placeholder="ex. S1 — P1" />
             </div>
             <div className="field">
               <label>Projet</label>
@@ -104,53 +89,27 @@ export default function Poteau() {
               </select>
             </div>
 
-            <div className="field field--full">
-              <label>Forme de la section</label>
-              <select
-                className="select"
-                value={inp.forme}
-                onChange={(e) => set('forme', e.target.value as SectionForme)}
-              >
-                <option value="rect">Rectangulaire</option>
-                <option value="circ">Circulaire</option>
-              </select>
-            </div>
-
-            {inp.forme === 'rect' ? (
-              <>
-                <div className="field">
-                  <label>Petit côté a (cm)</label>
-                  <input type="number" value={inp.a} onChange={num('a')} min={10} step={1} />
-                </div>
-                <div className="field">
-                  <label>Grand côté b (cm)</label>
-                  <input type="number" value={inp.b} onChange={num('b')} min={10} step={1} />
-                </div>
-              </>
-            ) : (
-              <div className="field field--full">
-                <label>Diamètre D (cm)</label>
-                <input type="number" value={inp.D} onChange={num('D')} min={15} step={1} />
-              </div>
-            )}
-
             <div className="field">
-              <label>Longueur libre l₀ (m)</label>
-              <input type="number" value={inp.l0} onChange={num('l0')} min={0.5} step={0.1} />
+              <label>Poteau — côté a (cm)</label>
+              <input type="number" value={inp.a} onChange={num('a')} min={15} step={1} />
             </div>
             <div className="field">
-              <label>Liaison → Lf = k·l₀</label>
-              <select className="select" value={inp.k} onChange={(e) => set('k', parseFloat(e.target.value))}>
-                <option value={0.7}>Bâtiment courant, poteau continu (k = 0,7)</option>
-                <option value={1}>Articulé — articulé (k = 1,0)</option>
-                <option value={0.5}>Encastré — encastré (k = 0,5)</option>
-                <option value={2}>Encastré — libre / console (k = 2,0)</option>
-              </select>
+              <label>Poteau — côté b (cm)</label>
+              <input type="number" value={inp.b} onChange={num('b')} min={15} step={1} />
             </div>
 
-            <div className="field field--full">
-              <label>Effort normal ultime Nu (kN)</label>
+            <div className="field">
+              <label>Nu — ELU (kN)</label>
               <input type="number" value={inp.Nu} onChange={num('Nu')} min={0} step={10} />
+            </div>
+            <div className="field">
+              <label>Nser — ELS (kN)</label>
+              <input type="number" value={inp.Nser} onChange={num('Nser')} min={0} step={10} />
+            </div>
+
+            <div className="field field--full">
+              <label>Contrainte admissible du sol σsol (MPa)</label>
+              <input type="number" value={inp.sigmaSol} onChange={num('sigmaSol')} min={0.05} step={0.05} />
             </div>
 
             <div className="field">
@@ -175,15 +134,7 @@ export default function Poteau() {
             </div>
 
             <div className="field">
-              <label>Application des charges</label>
-              <select className="select" value={inp.age} onChange={(e) => set('age', e.target.value as AgeCharges)}>
-                <option value="apres90j">Après 90 jours</option>
-                <option value="avant90j">Avant 90 jours</option>
-                <option value="avant28j">Avant 28 jours</option>
-              </select>
-            </div>
-            <div className="field">
-              <label>Ø aciers longitudinaux (mm)</label>
+              <label>Ø aciers (mm)</label>
               <select className="select" value={inp.phiL} onChange={(e) => set('phiL', parseFloat(e.target.value))}>
                 {DIAM_L.map((v) => (
                   <option key={v} value={v}>
@@ -192,34 +143,33 @@ export default function Poteau() {
                 ))}
               </select>
             </div>
-            <div className="field field--full">
+            <div className="field">
               <label>Enrobage (cm)</label>
-              <input type="number" value={inp.enrob} onChange={num('enrob')} min={1} step={0.5} />
+              <input type="number" value={inp.enrob} onChange={num('enrob')} min={2} step={0.5} />
             </div>
           </div>
 
           <div className="section-title" style={{ marginTop: 20 }}>
-            Coupe transversale
+            Vue en plan
           </div>
-          <div dangerouslySetInnerHTML={{ __html: buildCoupeSvg(spec, 'app') }} />
+          <div dangerouslySetInnerHTML={{ __html: buildSemellePlanSvg(plan, 'app') }} />
         </div>
 
-        {/* ------------------------------------------------ Colonne résultats */}
+        {/* ------------------------------------------------ Résultats */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-          {/* Synthèse */}
           <div className={`card card--pad ${res.ok ? '' : 'card--ko'}`}>
             <div className="section-title">
               <Icon name={res.ok ? 'check' : 'alert'} size={18} /> Résultat
             </div>
             <div className="result-grid">
-              <Res label="Élancement λ" value={res.lambda.toFixed(1)} />
-              <Res label="Coefficient α" value={res.alpha.toFixed(3)} />
-              <Res label="A théorique" value={`${res.Ath.toFixed(2)} cm²`} />
-              <Res label="A retenue" value={`${res.As.toFixed(2)} cm²`} />
-              <Res label="Choix" value={`${res.nBarres} HA${inp.phiL}`} strong />
-              <Res label="Aⱼ réelle" value={`${res.AsReel.toFixed(2)} cm²`} />
-              <Res label="Cadres" value={`Ø${res.phiT} · e = ${res.stCourant.toFixed(0)} cm`} />
-              <Res label="Nu,lim" value={`${res.NuLim.toFixed(0)} kN`} />
+              <Res label="Semelle A × B" value={`${res.A} × ${res.B} cm`} strong />
+              <Res label="Hauteur h" value={`${res.h} cm`} />
+              <Res label="σ sol calculée" value={`${res.sigmaSolCalc.toFixed(3)} MPa`} />
+              <Res label="σ sol admis." value={`${inp.sigmaSol.toFixed(2)} MPa`} />
+              <Res label="Nappe // A" value={`${res.nA} HA${inp.phiL}`} strong />
+              <Res label="Nappe // B" value={`${res.nB} HA${inp.phiL}`} strong />
+              <Res label="Aₛ // A" value={`${res.Asa.toFixed(2)} cm²`} />
+              <Res label="Ancrage" value={res.crochets ? 'Crochets' : 'Droit'} />
             </div>
 
             {res.erreurs.map((e, i) => (
@@ -234,7 +184,6 @@ export default function Poteau() {
             ))}
           </div>
 
-          {/* Note de calcul */}
           <div className="card card--pad">
             <div className="section-title">
               <Icon name="document" size={18} /> Note de calcul
@@ -266,8 +215,7 @@ export default function Poteau() {
               </table>
             </div>
             <p className="cell-sub" style={{ marginTop: 10 }}>
-              γb = {inp.gammaB} · γs = {inp.gammaS} · combinaison fondamentale ELU. Aire d'une barre HA{inp.phiL} ={' '}
-              {aireBarre(inp.phiL).toFixed(2)} cm².
+              Semelle homothétique au poteau (A/a = B/b), supposée rigide. γb = {inp.gammaB} · γs = {inp.gammaS}.
             </p>
           </div>
         </div>
@@ -284,4 +232,3 @@ function Res({ label, value, strong }: { label: string; value: string; strong?: 
     </div>
   );
 }
-

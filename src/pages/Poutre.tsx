@@ -2,67 +2,60 @@ import { useMemo, useState } from 'react';
 import { PageHead } from '@/components/ui/Page';
 import { Icon } from '@/components/ui/Icon';
 import { useData } from '@/lib/store';
-import {
-  calculPoteauBAEL,
-  aireBarre,
-  specPoteau,
-  type PoteauInput,
-  type SectionForme,
-  type AgeCharges,
-} from '@/lib/calc/poteau';
+import { aireBarre } from '@/lib/calc/poteau';
+import { calculPoutreBAEL, specPoutre, type PoutreInput, type Fissuration } from '@/lib/calc/poutre';
 import { buildCoupeSvg } from '@/lib/calc/coupe';
-import { exportPoteauNotePdf } from '@/lib/calc/notePdf';
+import { exportPoutreNotePdf } from '@/lib/calc/notePdf';
 import { buildCoupeDxf, downloadDxf } from '@/lib/calc/dxf';
 
-/** Valeurs par défaut d'un poteau courant de bâtiment. */
-const DEFAULT: PoteauInput = {
-  forme: 'rect',
-  a: 25,
+const DEFAULT: PoutreInput = {
   b: 25,
-  D: 30,
-  l0: 3,
-  k: 0.7,
-  Nu: 900,
+  h: 50,
+  enrob: 3,
+  Mu: 120,
+  Vu: 140,
   fc28: 25,
   fe: 500,
-  age: 'apres90j',
   gammaB: 1.5,
   gammaS: 1.15,
-  phiL: 12,
-  enrob: 3,
+  phiL: 16,
+  phiT: 8,
+  nBrins: 2,
+  fissuration: 'PP',
 };
 
-const DIAM_L = [12, 14, 16, 20, 25, 32];
+const DIAM_L = [10, 12, 14, 16, 20, 25, 32];
+const DIAM_T = [6, 8, 10, 12];
 
-export default function Poteau() {
+export default function Poutre() {
   const data = useData();
-  const [inp, setInp] = useState<PoteauInput>(DEFAULT);
+  const [inp, setInp] = useState<PoutreInput>(DEFAULT);
   const [repere, setRepere] = useState('');
   const [projetId, setProjetId] = useState('');
-  const res = useMemo(() => calculPoteauBAEL(inp), [inp]);
+  const res = useMemo(() => calculPoutreBAEL(inp), [inp]);
 
-  const set = <K extends keyof PoteauInput>(key: K, value: PoteauInput[K]) =>
+  const set = <K extends keyof PoutreInput>(key: K, value: PoutreInput[K]) =>
     setInp((s) => ({ ...s, [key]: value }));
-  const num = <K extends keyof PoteauInput>(key: K) => (e: React.ChangeEvent<HTMLInputElement>) =>
-    set(key, (parseFloat(e.target.value) || 0) as PoteauInput[K]);
+  const num = <K extends keyof PoutreInput>(key: K) => (e: React.ChangeEvent<HTMLInputElement>) =>
+    set(key, (parseFloat(e.target.value) || 0) as PoutreInput[K]);
 
-  const spec = specPoteau(inp, res);
+  const spec = specPoutre(inp, res);
   const projetNom = data.chantiers.find((c) => c.id === projetId)?.nom;
-  const nomFichier = `Poteau_${(repere.trim() || 'element').replace(/[^\w-]+/g, '_')}`;
+  const nomFichier = `Poutre_${(repere.trim() || 'element').replace(/[^\w-]+/g, '_')}`;
 
   const exportPdf = () =>
-    exportPoteauNotePdf(inp, res, { repere: repere.trim() || undefined, projet: projetNom });
+    exportPoutreNotePdf(inp, res, { repere: repere.trim() || undefined, projet: projetNom });
   const exportDxf = () =>
     downloadDxf(
       nomFichier,
-      buildCoupeDxf(spec, { titre: `POTEAU ${repere.trim() || ''}`.trim(), legende: spec.legende }),
+      buildCoupeDxf(spec, { titre: `POUTRE ${repere.trim() || ''}`.trim(), legende: spec.legende }),
     );
 
   return (
     <>
       <PageHead
-        title="Poteau BA — compression centrée"
-        subtitle="Dimensionnement selon BAEL 91 révisé 99 (Art. B.8.4)"
+        title="Poutre BA — flexion simple + tranchant"
+        subtitle="Dimensionnement selon BAEL 91 révisé 99 (Art. A.4 & A.5)"
         actions={
           <>
             <button className="btn btn--ghost" onClick={exportDxf}>
@@ -76,7 +69,7 @@ export default function Poteau() {
       />
 
       <div className="split" style={{ alignItems: 'start' }}>
-        {/* ------------------------------------------------ Colonne de saisie */}
+        {/* ------------------------------------------------ Saisie */}
         <div className="card card--pad">
           <div className="section-title">
             <Icon name="edit" size={18} /> Données
@@ -85,12 +78,7 @@ export default function Poteau() {
           <div className="form-grid">
             <div className="field">
               <label>Repère de l'élément</label>
-              <input
-                type="text"
-                value={repere}
-                onChange={(e) => setRepere(e.target.value)}
-                placeholder="ex. P1 — RDC"
-              />
+              <input type="text" value={repere} onChange={(e) => setRepere(e.target.value)} placeholder="ex. P.12 — N2" />
             </div>
             <div className="field">
               <label>Projet</label>
@@ -104,53 +92,22 @@ export default function Poteau() {
               </select>
             </div>
 
-            <div className="field field--full">
-              <label>Forme de la section</label>
-              <select
-                className="select"
-                value={inp.forme}
-                onChange={(e) => set('forme', e.target.value as SectionForme)}
-              >
-                <option value="rect">Rectangulaire</option>
-                <option value="circ">Circulaire</option>
-              </select>
-            </div>
-
-            {inp.forme === 'rect' ? (
-              <>
-                <div className="field">
-                  <label>Petit côté a (cm)</label>
-                  <input type="number" value={inp.a} onChange={num('a')} min={10} step={1} />
-                </div>
-                <div className="field">
-                  <label>Grand côté b (cm)</label>
-                  <input type="number" value={inp.b} onChange={num('b')} min={10} step={1} />
-                </div>
-              </>
-            ) : (
-              <div className="field field--full">
-                <label>Diamètre D (cm)</label>
-                <input type="number" value={inp.D} onChange={num('D')} min={15} step={1} />
-              </div>
-            )}
-
             <div className="field">
-              <label>Longueur libre l₀ (m)</label>
-              <input type="number" value={inp.l0} onChange={num('l0')} min={0.5} step={0.1} />
+              <label>Largeur b₀ (cm)</label>
+              <input type="number" value={inp.b} onChange={num('b')} min={10} step={1} />
             </div>
             <div className="field">
-              <label>Liaison → Lf = k·l₀</label>
-              <select className="select" value={inp.k} onChange={(e) => set('k', parseFloat(e.target.value))}>
-                <option value={0.7}>Bâtiment courant, poteau continu (k = 0,7)</option>
-                <option value={1}>Articulé — articulé (k = 1,0)</option>
-                <option value={0.5}>Encastré — encastré (k = 0,5)</option>
-                <option value={2}>Encastré — libre / console (k = 2,0)</option>
-              </select>
+              <label>Hauteur h (cm)</label>
+              <input type="number" value={inp.h} onChange={num('h')} min={15} step={1} />
             </div>
 
-            <div className="field field--full">
-              <label>Effort normal ultime Nu (kN)</label>
-              <input type="number" value={inp.Nu} onChange={num('Nu')} min={0} step={10} />
+            <div className="field">
+              <label>Moment Mu (kN·m)</label>
+              <input type="number" value={inp.Mu} onChange={num('Mu')} min={0} step={5} />
+            </div>
+            <div className="field">
+              <label>Effort tranchant Vu (kN)</label>
+              <input type="number" value={inp.Vu} onChange={num('Vu')} min={0} step={5} />
             </div>
 
             <div className="field">
@@ -175,21 +132,43 @@ export default function Poteau() {
             </div>
 
             <div className="field">
-              <label>Application des charges</label>
-              <select className="select" value={inp.age} onChange={(e) => set('age', e.target.value as AgeCharges)}>
-                <option value="apres90j">Après 90 jours</option>
-                <option value="avant90j">Avant 90 jours</option>
-                <option value="avant28j">Avant 28 jours</option>
-              </select>
-            </div>
-            <div className="field">
-              <label>Ø aciers longitudinaux (mm)</label>
+              <label>Ø longitudinaux (mm)</label>
               <select className="select" value={inp.phiL} onChange={(e) => set('phiL', parseFloat(e.target.value))}>
                 {DIAM_L.map((v) => (
                   <option key={v} value={v}>
                     HA{v}
                   </option>
                 ))}
+              </select>
+            </div>
+            <div className="field">
+              <label>Ø cadres (mm)</label>
+              <select className="select" value={inp.phiT} onChange={(e) => set('phiT', parseFloat(e.target.value))}>
+                {DIAM_T.map((v) => (
+                  <option key={v} value={v}>
+                    Ø{v}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="field">
+              <label>Brins transversaux</label>
+              <select className="select" value={inp.nBrins} onChange={(e) => set('nBrins', parseFloat(e.target.value))}>
+                <option value={2}>2 (cadre)</option>
+                <option value={4}>4 (cadre + étrier)</option>
+              </select>
+            </div>
+            <div className="field">
+              <label>Fissuration</label>
+              <select
+                className="select"
+                value={inp.fissuration}
+                onChange={(e) => set('fissuration', e.target.value as Fissuration)}
+              >
+                <option value="PP">Peu préjudiciable</option>
+                <option value="P">Préjudiciable</option>
+                <option value="TP">Très préjudiciable</option>
               </select>
             </div>
             <div className="field field--full">
@@ -204,22 +183,21 @@ export default function Poteau() {
           <div dangerouslySetInnerHTML={{ __html: buildCoupeSvg(spec, 'app') }} />
         </div>
 
-        {/* ------------------------------------------------ Colonne résultats */}
+        {/* ------------------------------------------------ Résultats */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-          {/* Synthèse */}
           <div className={`card card--pad ${res.ok ? '' : 'card--ko'}`}>
             <div className="section-title">
               <Icon name={res.ok ? 'check' : 'alert'} size={18} /> Résultat
             </div>
             <div className="result-grid">
-              <Res label="Élancement λ" value={res.lambda.toFixed(1)} />
-              <Res label="Coefficient α" value={res.alpha.toFixed(3)} />
-              <Res label="A théorique" value={`${res.Ath.toFixed(2)} cm²`} />
-              <Res label="A retenue" value={`${res.As.toFixed(2)} cm²`} />
-              <Res label="Choix" value={`${res.nBarres} HA${inp.phiL}`} strong />
-              <Res label="Aⱼ réelle" value={`${res.AsReel.toFixed(2)} cm²`} />
-              <Res label="Cadres" value={`Ø${res.phiT} · e = ${res.stCourant.toFixed(0)} cm`} />
-              <Res label="Nu,lim" value={`${res.NuLim.toFixed(0)} kN`} />
+              <Res label="Moment réduit μ" value={res.mu.toFixed(3)} />
+              <Res label="Hauteur utile d" value={`${res.d.toFixed(1)} cm`} />
+              <Res label="A tendu" value={`${res.As.toFixed(2)} cm²`} />
+              <Res label="A comprimé" value={`${res.Asup.toFixed(2)} cm²`} />
+              <Res label="Nappe inf." value={`${res.nInf} HA${inp.phiL}`} strong />
+              <Res label="Aₛ réel" value={`${res.AsReel.toFixed(2)} cm²`} />
+              <Res label="τu / τlim" value={`${res.tauU.toFixed(2)} / ${res.tauLim.toFixed(2)}`} />
+              <Res label="Cadres" value={`Ø${res.phiT} · e = ${res.st.toFixed(0)} cm`} strong />
             </div>
 
             {res.erreurs.map((e, i) => (
@@ -234,7 +212,6 @@ export default function Poteau() {
             ))}
           </div>
 
-          {/* Note de calcul */}
           <div className="card card--pad">
             <div className="section-title">
               <Icon name="document" size={18} /> Note de calcul
@@ -266,7 +243,7 @@ export default function Poteau() {
               </table>
             </div>
             <p className="cell-sub" style={{ marginTop: 10 }}>
-              γb = {inp.gammaB} · γs = {inp.gammaS} · combinaison fondamentale ELU. Aire d'une barre HA{inp.phiL} ={' '}
+              γb = {inp.gammaB} · γs = {inp.gammaS} · ELU. Aire d'une barre HA{inp.phiL} ={' '}
               {aireBarre(inp.phiL).toFixed(2)} cm².
             </p>
           </div>
@@ -284,4 +261,3 @@ function Res({ label, value, strong }: { label: string; value: string; strong?: 
     </div>
   );
 }
-

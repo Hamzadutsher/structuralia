@@ -61,17 +61,6 @@ export const NAV: NavCategory[] = [
     ],
   },
   {
-    title: 'Études & calculs',
-    icon: 'building',
-    groups: [
-      {
-        title: 'Béton armé (BAEL)',
-        icon: 'building',
-        links: [{ to: '/calcul/poteau', label: 'Poteau', icon: 'building' }],
-      },
-    ],
-  },
-  {
     title: 'Administration',
     links: [{ to: '/membres', label: 'Membres & rôles', icon: 'settings', perm: 'canManageMembers' }],
   },
@@ -88,5 +77,15 @@ export const PAGE_TITLES: Record<string, string> = {
   '/chantiers': 'Projets',
   '/suivi': 'Suivi des travaux',
   '/membres': 'Membres & rôles',
+  '/calcul': 'Études & calculs',
   '/calcul/poteau': 'Poteau BA — BAEL 91',
+  '/calcul/poteau-fc': 'Poteau BA — flexion composée',
+  '/calcul/poutre': 'Poutre BA — BAEL 91',
+  '/calcul/poutre-continue': 'Poutre continue — Caquot',
+  '/calcul/sismique': 'Sismique — RPS 2011',
+  '/calcul/descente': 'Descente de charges',
+  '/calcul/semelle': 'Semelle isolée — BAEL 91',
+  '/calcul/semelle-filante': 'Semelle filante — BAEL 91',
+  '/calcul/dalle': 'Dalle pleine — BAEL 91',
+  '/calcul/escalier': 'Escalier — BAEL 91',
 };
