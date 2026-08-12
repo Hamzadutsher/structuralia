@@ -8,9 +8,11 @@ interface Props {
   children: React.ReactNode;
   footer?: React.ReactNode;
   large?: boolean;
+  /** Rend la modale au-dessus d'une autre modale (ex. sélecteur ouvert depuis un formulaire). */
+  elevated?: boolean;
 }
 
-export function Modal({ open, title, onClose, children, footer, large }: Props) {
+export function Modal({ open, title, onClose, children, footer, large, elevated }: Props) {
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
@@ -25,7 +27,7 @@ export function Modal({ open, title, onClose, children, footer, large }: Props) 
   if (!open) return null;
 
   return (
-    <div className="modal-backdrop" onMouseDown={onClose}>
+    <div className={`modal-backdrop${elevated ? ' modal-backdrop--top' : ''}`} onMouseDown={onClose}>
       <div
         className={`modal${large ? ' modal--lg' : ''}`}
         onMouseDown={(e) => e.stopPropagation()}

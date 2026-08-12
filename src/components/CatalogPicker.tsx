@@ -59,6 +59,7 @@ export function CatalogPicker({
     <Modal
       open={open}
       large
+      elevated
       title="Prestations prédéfinies (catalogue BET)"
       onClose={onClose}
       footer={
