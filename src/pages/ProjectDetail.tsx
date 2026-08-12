@@ -14,6 +14,7 @@ import { catalogLignes } from '@/lib/catalog';
 import { totalHT } from '@/components/ui/LignesEditor';
 import { useToast } from '@/components/ui/Toast';
 import { useCan } from '@/lib/roles';
+import { PhotoGallery } from '@/components/PhotoGallery';
 
 export default function ProjectDetail() {
   const { id } = useParams();
@@ -163,6 +164,7 @@ export default function ProjectDetail() {
           { key: 'taches', label: 'Tâches', icon: 'suivi', count: taches.length },
           { key: 'docs', label: 'Documents', icon: 'document', count: documents.length },
           { key: 'controles', label: 'PV / Contrôles', icon: 'convention', count: pvs.length },
+          { key: 'photos', label: 'Photos', icon: 'pin', count: documents.filter((d) => d.categorie === 'PHOTO').length },
           { key: 'facturation', label: 'Facturation', icon: 'facture', count: devis.length + factures.length },
           { key: 'conventions', label: 'Conventions', icon: 'convention', count: conventions.length },
         ]}
@@ -332,6 +334,14 @@ export default function ProjectDetail() {
           <div style={{ padding: 14 }}>
             <Link to="/suivi" className="btn btn--ghost btn--sm">Générer un document de contrôle <Icon name="chevron" size={14} /></Link>
           </div>
+        </div>
+      )}
+
+      {/* --- Photos --- */}
+      {tab === 'photos' && (
+        <div className="card card--pad">
+          <div className="section-title"><Icon name="pin" size={18} /> Photos du chantier</div>
+          <PhotoGallery chantierId={chantier.id} clientId={chantier.clientId} />
         </div>
       )}
 

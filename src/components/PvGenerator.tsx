@@ -12,6 +12,7 @@ import {
 import { Modal } from '@/components/ui/Modal';
 import { Icon } from '@/components/ui/Icon';
 import { humanize } from '@/lib/format';
+import { useData } from '@/lib/store';
 
 const PV_PREFIX: Record<PvType, string> = {
   RECEPTION_COFFRAGE: 'PV-COF',
@@ -92,6 +93,13 @@ export function PvGenerator({
   const [volume, setVolume] = useState('');
   const [plan, setPlan] = useState('');
   const [heure, setHeure] = useState('');
+  // Reportage photographique (rapport de synthèse)
+  const data = useData();
+  const [photoIds, setPhotoIds] = useState<string[]>([]);
+  const chantierPhotos = data.documents.filter(
+    (d) => d.chantierId === chantierId && d.categorie === 'PHOTO' && d.dataUrl,
+  );
+  const togglePhoto = (id: string) => setPhotoIds((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
 
   const chantier = chantiers.find((c) => c.id === chantierId);
   const client = clients.find((c) => c.id === chantier?.clientId);
@@ -131,6 +139,10 @@ export function PvGenerator({
     intervenants: type === 'SYNTHESE' ? intervenants : undefined,
     points: type === 'SYNTHESE' ? points.filter((p) => p.trim()) : undefined,
     conclusion: type === 'SYNTHESE' ? conclusion : undefined,
+    photos:
+      type === 'SYNTHESE'
+        ? chantierPhotos.filter((p) => photoIds.includes(p.id)).map((p) => p.dataUrl as string)
+        : undefined,
     objet: type === 'ATTESTATION' ? objet : undefined,
     designation: type === 'ATTESTATION' ? designation : undefined,
     references: type === 'ATTESTATION' ? references : undefined,
@@ -376,6 +388,34 @@ export function PvGenerator({
             <div className="field field--full">
               <label>Conclusion</label>
               <textarea value={conclusion} onChange={(e) => setConclusion(e.target.value)} />
+            </div>
+            <div className="field field--full">
+              <label>Reportage photographique {photoIds.length > 0 ? `(${photoIds.length} sélectionnée(s))` : ''}</label>
+              {chantierPhotos.length === 0 ? (
+                <span className="cell-sub">Aucune photo sur ce chantier. Ajoutez-en via l’onglet « Photos » de la fiche projet.</span>
+              ) : (
+                <div className="photo-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(110px, 1fr))' }}>
+                  {chantierPhotos.map((p) => {
+                    const sel = photoIds.includes(p.id);
+                    return (
+                      <div
+                        key={p.id}
+                        className="photo-thumb"
+                        style={{ aspectRatio: '4/3', borderRadius: 8, border: sel ? '3px solid var(--primary-500)' : '1px solid var(--border)', outline: 'none' }}
+                        onClick={() => togglePhoto(p.id)}
+                        title={p.titre}
+                      >
+                        <img src={p.dataUrl} alt={p.titre} />
+                        {sel && (
+                          <span style={{ position: 'absolute', top: 4, right: 4, background: 'var(--primary-500)', color: '#fff', borderRadius: '50%', width: 20, height: 20, display: 'grid', placeItems: 'center' }}>
+                            <Icon name="check" size={13} />
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </>
         )}

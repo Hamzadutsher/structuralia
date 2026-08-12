@@ -61,6 +61,8 @@ export interface PvData {
   intervenants?: string;
   points?: string[];
   conclusion?: string;
+  /** Reportage photographique (data URLs) pour le rapport de synthèse. */
+  photos?: string[];
   // Attestation
   objet?: 'CONFORMITE' | 'STABILITE';
   designation?: string;
@@ -223,6 +225,11 @@ function bodyReserves(d: PvData): string {
 
 function bodySynthese(d: PvData): string {
   const points = (d.points ?? []).filter(Boolean).map((p) => `<li>${escapeHtml(p)}</li>`).join('');
+  const photos = (d.photos ?? []).filter(Boolean);
+  const photosHtml = photos.length
+    ? `<h2>Reportage photographique</h2>
+       <div class="photos">${photos.map((src) => `<img src="${src}" />`).join('')}</div>`
+    : '';
   return `
   <table class="meta">
     <tr><td><label>Période</label>${escapeHtml(d.periode ?? '—')}</td><td><label>Intervenants</label>${escapeHtml(d.intervenants ?? '—')}</td></tr>
@@ -230,7 +237,8 @@ function bodySynthese(d: PvData): string {
   <h2>Points traités et avancement</h2>
   <ul class="points">${points || '<li>—</li>'}</ul>
   ${d.observations ? `<h2>Observations</h2><p>${escapeHtml(d.observations)}</p>` : ''}
-  ${d.conclusion ? `<div class="notes"><b>Conclusion :</b><br>${escapeHtml(d.conclusion)}</div>` : ''}`;
+  ${d.conclusion ? `<div class="notes"><b>Conclusion :</b><br>${escapeHtml(d.conclusion)}</div>` : ''}
+  ${photosHtml}`;
 }
 
 function bodyAttestation(d: PvData): string {
@@ -279,6 +287,9 @@ function buildHtml(d: PvData): string {
   table.grid td { padding: 8px 10px; border-bottom: 1px solid #e4e9ec; vertical-align: top; }
   h2 { font-size: 13px; color: #0f766e; margin: 18px 0 8px; }
   ul.points { margin: 0 0 8px 18px; }
+  .photos { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 6px; }
+  .photos img { width: 100%; height: 150px; object-fit: cover; border-radius: 6px; border: 1px solid #e4e9ec; }
+  @media print { .photos img { break-inside: avoid; } }
   ul.points li { margin-bottom: 4px; }
   .intro { margin-bottom: 12px; }
   .notes { margin-top: 14px; padding: 12px 14px; background: #f0fdfa; border-left: 3px solid #14b8a6; border-radius: 6px; color: #115e59; }
