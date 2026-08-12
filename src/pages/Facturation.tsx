@@ -14,6 +14,7 @@ import { exportDevisPdf, exportFacturePdf, exportRelancePdf } from '@/lib/pdf';
 import { LignesEditor, totalHT } from '@/components/ui/LignesEditor';
 import { catalogLignes, prestationToLigne } from '@/lib/catalog';
 import { CatalogPicker } from '@/components/CatalogPicker';
+import { SituationFacturation } from '@/components/SituationFacturation';
 import { exportConventionPdf } from '@/lib/convention-doc';
 import type { LigneDevis } from '@/lib/types';
 
@@ -115,18 +116,21 @@ function DevisTab({ goToFactures }: { goToFactures: () => void }) {
   const [picker, setPicker] = useState(false);
   const [editing, setEditing] = useState<Devis | null>(null);
   const [form, setForm] = useState(emptyDevis);
+  const [situation, setSituation] = useState<Devis | null>(null);
 
   const clientObj = (id: string) => data.clients.find((c) => c.id === id);
   const clientName = (id: string) => clientObj(id)?.nom ?? '—';
 
-  // Génère une facture pré-remplie à partir d'un devis.
-  const facturer = (d: Devis) => {
-    const brut = totalHT(d.lignes) || d.montantHT;
-    const remise = d.remisePourcent || 0;
-    const montantHT = Math.round(brut * (1 - remise / 100));
+  const dejaFactureHT = (devisId: string) =>
+    data.factures.filter((f) => f.devisId === devisId && f.statut !== 'ANNULEE').reduce((s, f) => s + (f.montantHT || 0), 0);
+
+  // Crée une facture de situation (partielle) à partir d'un devis.
+  const creerSituation = (montantHT: number, lignes: Devis['lignes'], libelle: string) => {
+    const d = situation;
+    if (!d) return;
     store.create('factures', {
       reference: `FAC-2026-${50 + data.factures.length + 1}`,
-      objet: d.objet,
+      objet: `${d.objet} — ${libelle}`,
       clientId: d.clientId,
       chantierId: d.chantierId ?? '',
       devisId: d.id,
@@ -134,14 +138,15 @@ function DevisTab({ goToFactures }: { goToFactures: () => void }) {
       dateEcheance: '',
       montantHT,
       tauxTVA: d.tauxTVA,
-      remisePourcent: remise,
+      remisePourcent: 0,
       montantTTC: Math.round(montantHT * (1 + d.tauxTVA / 100)),
       montantPaye: 0,
       statut: 'BROUILLON',
-      lignes: d.lignes,
-      notes: `Facture générée depuis le devis ${d.reference}.`,
+      lignes,
+      notes: `${libelle} — depuis le devis ${d.reference}.`,
     });
-    toast('Facture créée depuis le devis.', 'success');
+    toast('Facture (situation) créée.', 'success');
+    setSituation(null);
     goToFactures();
   };
 
@@ -234,6 +239,17 @@ function DevisTab({ goToFactures }: { goToFactures: () => void }) {
 
       <CatalogPicker open={picker} onClose={() => setPicker(false)} onAdd={(l) => set('lignes', mergeLignes(form.lignes, l))} />
 
+      <SituationFacturation
+        open={!!situation}
+        devis={situation}
+        dejaFactureHT={situation ? dejaFactureHT(situation.id) : 0}
+        chantierAvancement={
+          situation?.chantierId ? data.chantiers.find((c) => c.id === situation.chantierId)?.avancement : undefined
+        }
+        onClose={() => setSituation(null)}
+        onCreate={creerSituation}
+      />
+
       <div className="card">
         {filtered.length === 0 ? (
           <EmptyState icon="devis" title="Aucun devis" />
@@ -267,7 +283,7 @@ function DevisTab({ goToFactures }: { goToFactures: () => void }) {
                         </button>
                         {can.canManageFacturation && (
                           <>
-                            <button className="icon-btn" onClick={() => facturer(d)} aria-label="Facturer" title="Générer une facture depuis ce devis">
+                            <button className="icon-btn" onClick={() => setSituation(d)} aria-label="Facturer" title="Facturer (situation : avancement, phases, montant)">
                               <Icon name="facture" size={15} />
                             </button>
                             <button className="icon-btn" onClick={() => genererConvention(d)} aria-label="Convention" title="Générer une convention + contrat depuis ce devis">
