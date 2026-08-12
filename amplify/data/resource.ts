@@ -196,6 +196,8 @@ const schema = a.schema({
       moyenPaiement: a.string(),
       statut: a.enum(['PAYEE', 'A_PAYER']),
       notes: a.string(),
+      km: a.float(),
+      tauxKm: a.float(),
     })
     .authorization((allow) => [allow.authenticated()]),
 

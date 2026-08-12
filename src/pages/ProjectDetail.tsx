@@ -52,6 +52,7 @@ export default function ProjectDetail() {
       devisAutres: data.devis.filter((d) => d.clientId === chantier.clientId && d.chantierId !== chantier.id),
       facturesAutres: data.factures.filter((f) => f.clientId === chantier.clientId && f.chantierId !== chantier.id),
       conventions: data.conventions.filter((cv) => cv.clientId === chantier.clientId),
+      depenses: data.depenses.filter((dp) => dp.chantierId === chantier.id),
     };
   }, [chantier, data]);
 
@@ -72,8 +73,10 @@ export default function ProjectDetail() {
     );
   }
 
-  const { client, taches, documents, pvs, devis, factures, devisAutres, facturesAutres, conventions } = scoped;
+  const { client, taches, documents, pvs, devis, factures, devisAutres, facturesAutres, conventions, depenses } = scoped;
 
+  const factureTotal = factures.reduce((s, f) => s + (f.montantTTC || 0), 0);
+  const depensesTotal = depenses.reduce((s, d) => s + (d.montantTTC || 0), 0);
   const factureCA = factures.reduce((s, f) => s + (f.montantPaye || 0), 0);
   const factureDu = factures
     .filter((f) => f.statut !== 'PAYEE' && f.statut !== 'ANNULEE')
@@ -235,6 +238,26 @@ export default function ProjectDetail() {
               <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0' }}>
                 <span className="cell-sub">Restant dû</span><b style={{ color: factureDu > 0 ? 'var(--danger)' : undefined }}>{eur(factureDu)}</b>
               </div>
+            </div>
+            <div className="card card--pad">
+              <div className="section-title"><Icon name="trending" size={18} /> Rentabilité de l’affaire</div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0' }}>
+                <span className="cell-sub">Facturé (TTC)</span><b>{eur(factureTotal)}</b>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0' }}>
+                <span className="cell-sub">Encaissé</span><b>{eur(factureCA)}</b>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0' }}>
+                <span className="cell-sub">Dépenses ({depenses.length})</span>
+                <b style={{ color: depensesTotal > 0 ? 'var(--danger)' : undefined }}>{eur(depensesTotal)}</b>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '9px 0 4px', borderTop: '1px solid var(--border)', marginTop: 4 }}>
+                <span className="cell-sub" style={{ fontWeight: 700 }}>Marge (encaissé − dépenses)</span>
+                <b style={{ color: factureCA - depensesTotal >= 0 ? 'var(--success)' : 'var(--danger)' }}>{eur(factureCA - depensesTotal)}</b>
+              </div>
+              <Link to="/comptabilite" className="btn btn--ghost btn--sm" style={{ marginTop: 10 }}>
+                Voir la comptabilité <Icon name="chevron" size={14} />
+              </Link>
             </div>
           </div>
         </div>

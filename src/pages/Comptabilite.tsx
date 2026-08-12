@@ -19,6 +19,7 @@ const CATS: DepenseCategorie[] = [
 const STATUTS: DepenseStatut[] = ['PAYEE', 'A_PAYER'];
 const PAIEMENTS = ['Virement', 'Chèque', 'Espèces', 'Carte'];
 const TYPE_LABEL: Record<DepenseType, string> = { ACHAT: 'Achat', DEPLACEMENT: 'Déplacement', CHARGE: 'Charge' };
+const BAREME_KM_DEFAUT = 2.5; // MAD / km
 
 const year = (iso?: string) => (iso ? new Date(iso).getFullYear() : 0);
 
@@ -36,6 +37,8 @@ const empty: Omit<Depense, 'id' | 'createdAt' | 'updatedAt'> = {
   moyenPaiement: 'Virement',
   statut: 'PAYEE',
   notes: '',
+  km: 0,
+  tauxKm: BAREME_KM_DEFAUT,
 };
 
 export default function Comptabilite() {
@@ -242,7 +245,13 @@ export default function Comptabilite() {
           </div>
           <div className="field">
             <label>Type</label>
-            <select value={form.type} onChange={(e) => set('type', e.target.value as DepenseType)}>
+            <select
+              value={form.type}
+              onChange={(e) => {
+                const t = e.target.value as DepenseType;
+                setForm((f) => ({ ...f, type: t, tauxKm: t === 'DEPLACEMENT' && !f.tauxKm ? BAREME_KM_DEFAUT : f.tauxKm }));
+              }}
+            >
               {TYPES.map((t) => <option key={t} value={t}>{TYPE_LABEL[t]}</option>)}
             </select>
           </div>
@@ -250,6 +259,39 @@ export default function Comptabilite() {
             <label>Libellé *</label>
             <input value={form.libelle} onChange={(e) => set('libelle', e.target.value)} placeholder="Ex. Achat matériel topographique" />
           </div>
+          {form.type === 'DEPLACEMENT' && (
+            <>
+              <div className="field">
+                <label>Distance (km)</label>
+                <input
+                  type="number"
+                  min={0}
+                  value={form.km}
+                  onChange={(e) => {
+                    const km = Number(e.target.value);
+                    setForm((f) => ({ ...f, km, montantHT: Math.round(km * (f.tauxKm || 0)) }));
+                  }}
+                />
+              </div>
+              <div className="field">
+                <label>Barème (MAD/km)</label>
+                <input
+                  type="number"
+                  step="0.1"
+                  min={0}
+                  value={form.tauxKm}
+                  onChange={(e) => {
+                    const taux = Number(e.target.value);
+                    setForm((f) => ({ ...f, tauxKm: taux, montantHT: Math.round((f.km || 0) * taux) }));
+                  }}
+                />
+              </div>
+              <div className="field">
+                <label>Indemnité (calculée)</label>
+                <input disabled value={eur((form.km || 0) * (form.tauxKm || 0))} />
+              </div>
+            </>
+          )}
           <div className="field">
             <label>Catégorie</label>
             <select value={form.categorie} onChange={(e) => set('categorie', e.target.value as DepenseCategorie)}>

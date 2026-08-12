@@ -175,6 +175,9 @@ export interface Depense extends BaseEntity {
   moyenPaiement?: string;
   statut: DepenseStatut;
   notes?: string;
+  /** Frais de déplacement au barème : distance et taux (MAD/km). */
+  km?: number;
+  tauxKm?: number;
 }
 
 export type Role = 'DIRECTION' | 'INGENIEUR' | 'GESTIONNAIRE';

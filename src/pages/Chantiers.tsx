@@ -10,6 +10,7 @@ import { EmptyState, Progress } from '@/components/ui/Misc';
 import { Icon } from '@/components/ui/Icon';
 import { useToast } from '@/components/ui/Toast';
 import { useCan } from '@/lib/roles';
+import { NouvelleAffaireParticulier } from '@/components/NouvelleAffaireParticulier';
 
 const STATUTS: ChantierStatut[] = ['PLANIFIE', 'EN_COURS', 'SUSPENDU', 'TERMINE', 'ANNULE'];
 
@@ -38,6 +39,7 @@ export default function Chantiers() {
   const [modal, setModal] = useState(false);
   const [editing, setEditing] = useState<Chantier | null>(null);
   const [form, setForm] = useState(empty);
+  const [affaire, setAffaire] = useState(false);
 
   const clientName = (id: string) => data.clients.find((c) => c.id === id)?.nom ?? '—';
 
@@ -86,10 +88,24 @@ export default function Chantiers() {
         title="Projets"
         subtitle="Vos projets (chantiers) — cœur de l’activité du bureau d’études"
         actions={
-          <button className="btn btn--primary" onClick={openNew}>
-            <Icon name="plus" size={16} /> Nouveau projet
-          </button>
+          <>
+            <button className="btn btn--ghost" onClick={() => setAffaire(true)} title="Créer client + projet + devis villa">
+              <Icon name="building" size={16} /> Affaire particulier
+            </button>
+            <button className="btn btn--primary" onClick={openNew}>
+              <Icon name="plus" size={16} /> Nouveau projet
+            </button>
+          </>
         }
+      />
+
+      <NouvelleAffaireParticulier
+        open={affaire}
+        onClose={() => setAffaire(false)}
+        onCreated={(id) => {
+          setAffaire(false);
+          navigate(`/projets/${id}`);
+        }}
       />
 
       <div className="toolbar">
