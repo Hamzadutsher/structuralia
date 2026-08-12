@@ -62,7 +62,10 @@ export const NAV: NavCategory[] = [
   },
   {
     title: 'Administration',
-    links: [{ to: '/membres', label: 'Membres & rôles', icon: 'settings', perm: 'canManageMembers' }],
+    links: [
+      { to: '/comptabilite', label: 'Comptabilité', icon: 'euro', perm: 'canManageFacturation' },
+      { to: '/membres', label: 'Membres & rôles', icon: 'settings', perm: 'canManageMembers' },
+    ],
   },
 ];
 
@@ -77,6 +80,7 @@ export const PAGE_TITLES: Record<string, string> = {
   '/chantiers': 'Projets',
   '/suivi': 'Suivi des travaux',
   '/membres': 'Membres & rôles',
+  '/comptabilite': 'Comptabilité interne',
   '/calcul': 'Études & calculs',
   '/calcul/poteau': 'Poteau BA — BAEL 91',
   '/calcul/poteau-fc': 'Poteau BA — flexion composée',

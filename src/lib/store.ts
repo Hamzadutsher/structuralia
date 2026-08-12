@@ -16,7 +16,7 @@ import * as backend from './amplifyData';
  * identiques dans les deux modes.
  */
 
-const STORAGE_KEY = 'structuralia:data:v6';
+const STORAGE_KEY = 'structuralia:data:v7';
 
 let state: AppData = load();
 const listeners = new Set<() => void>();
@@ -33,6 +33,7 @@ function emptyData(): AppData {
     membres: [],
     pvs: [],
     prestations: [],
+    depenses: [],
   };
 }
 

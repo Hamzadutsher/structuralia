@@ -145,6 +145,38 @@ export interface Prestation extends BaseEntity {
   actif: boolean;
 }
 
+export type DepenseType = 'ACHAT' | 'DEPLACEMENT' | 'CHARGE';
+export type DepenseCategorie =
+  | 'FOURNITURES'
+  | 'SOUS_TRAITANCE'
+  | 'DEPLACEMENT'
+  | 'CARBURANT'
+  | 'MATERIEL'
+  | 'LOGICIELS'
+  | 'LOYER'
+  | 'HONORAIRES'
+  | 'IMPOTS_TAXES'
+  | 'SALAIRES'
+  | 'DIVERS';
+export type DepenseStatut = 'PAYEE' | 'A_PAYER';
+
+/** Dépense interne : facture d'achat, frais de déplacement, charge… */
+export interface Depense extends BaseEntity {
+  date: string;
+  type: DepenseType;
+  categorie: DepenseCategorie;
+  libelle: string;
+  fournisseur?: string;
+  reference?: string; // n° de facture d'achat
+  montantHT: number;
+  tauxTVA: number;
+  montantTTC: number;
+  chantierId?: string; // rattachement projet optionnel
+  moyenPaiement?: string;
+  statut: DepenseStatut;
+  notes?: string;
+}
+
 export type Role = 'DIRECTION' | 'INGENIEUR' | 'GESTIONNAIRE';
 
 export interface Membre extends BaseEntity {
@@ -204,6 +236,7 @@ export interface AppData {
   membres: Membre[];
   pvs: Pv[];
   prestations: Prestation[];
+  depenses: Depense[];
 }
 
 export type EntityKey = keyof AppData;

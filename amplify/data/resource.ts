@@ -180,6 +180,25 @@ const schema = a.schema({
     })
     .authorization((allow) => [allow.authenticated()]),
 
+  // Comptabilité interne : dépenses, factures d'achat, frais de déplacement
+  Depense: a
+    .model({
+      date: a.date(),
+      type: a.enum(['ACHAT', 'DEPLACEMENT', 'CHARGE']),
+      categorie: a.string(),
+      libelle: a.string().required(),
+      fournisseur: a.string(),
+      reference: a.string(),
+      montantHT: a.float(),
+      tauxTVA: a.float(),
+      montantTTC: a.float(),
+      chantierId: a.id(),
+      moyenPaiement: a.string(),
+      statut: a.enum(['PAYEE', 'A_PAYER']),
+      notes: a.string(),
+    })
+    .authorization((allow) => [allow.authenticated()]),
+
   // Documents de contrôle émis (PV de réception, réserves, synthèse, attestation)
   Pv: a
     .model({

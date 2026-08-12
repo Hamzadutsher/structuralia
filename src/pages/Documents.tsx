@@ -15,6 +15,17 @@ import { buildReference, LOT_TYPES } from '@/lib/reference';
 
 const CATS: DocumentCategorie[] = ['PLAN', 'RAPPORT', 'NOTE_CALCUL', 'ADMINISTRATIF', 'PHOTO', 'AUTRE'];
 
+/** Couleur du badge de format selon l'extension du fichier. */
+function formatTone(type: string): 'danger' | 'info' | 'primary' | 'success' | 'warning' | 'neutral' {
+  const t = type.toLowerCase();
+  if (t === 'pdf') return 'danger';
+  if (['dwg', 'dxf', 'rvt', 'ifc'].includes(t)) return 'info';
+  if (['doc', 'docx', 'odt'].includes(t)) return 'primary';
+  if (['xls', 'xlsx', 'csv', 'ods'].includes(t)) return 'success';
+  if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'tif', 'tiff'].includes(t)) return 'warning';
+  return 'neutral';
+}
+
 const empty: Omit<Document, 'id' | 'createdAt' | 'updatedAt'> = {
   titre: '',
   reference: '',
@@ -162,7 +173,12 @@ export default function Documents() {
                         </div>
                       </div>
                     </td>
-                    <td><Badge tone="primary">{humanize(d.categorie)}</Badge></td>
+                    <td>
+                      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                        <Badge tone="primary">{humanize(d.categorie)}</Badge>
+                        {d.type && <Badge tone={formatTone(d.type)}>{d.type.toUpperCase()}</Badge>}
+                      </div>
+                    </td>
                     <td className="cell-sub">
                       {chantierName(d.chantierId) || clientName(d.clientId) || '—'}
                     </td>

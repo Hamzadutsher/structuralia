@@ -31,5 +31,6 @@ export function seedData(): AppData {
       prixUnitaire: c.prixUnitaire,
       actif: true,
     })),
+    depenses: [],
   };
 }

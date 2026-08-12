@@ -23,6 +23,7 @@ const STATUS_TONE: Record<string, Tone> = {
   ACCEPTE: 'success',
   REFUSE: 'danger',
   PAYEE: 'success',
+  A_PAYER: 'warning',
   PARTIELLE: 'warning',
   EN_RETARD: 'danger',
   ANNULEE: 'neutral',

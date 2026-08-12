@@ -17,6 +17,7 @@ const MODEL: Record<EntityKey, string> = {
   membres: 'Membre',
   pvs: 'Pv',
   prestations: 'Prestation',
+  depenses: 'Depense',
 };
 
 /** Champs présents côté client uniquement, à ne pas envoyer au backend. */
