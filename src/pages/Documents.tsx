@@ -11,11 +11,13 @@ import { Icon } from '@/components/ui/Icon';
 import { useToast } from '@/components/ui/Toast';
 import { useCan } from '@/lib/roles';
 import { uploadDocument, downloadDocument } from '@/lib/storage';
+import { buildReference, LOT_TYPES } from '@/lib/reference';
 
 const CATS: DocumentCategorie[] = ['PLAN', 'RAPPORT', 'NOTE_CALCUL', 'ADMINISTRATIF', 'PHOTO', 'AUTRE'];
 
 const empty: Omit<Document, 'id' | 'createdAt' | 'updatedAt'> = {
   titre: '',
+  reference: '',
   categorie: 'PLAN',
   type: 'pdf',
   url: '#',
@@ -35,9 +37,24 @@ export default function Documents() {
   const [form, setForm] = useState(empty);
   const [file, setFile] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
+  const [lotCode, setLotCode] = useState('GEN');
+  const [version, setVersion] = useState(0);
 
   const clientName = (id?: string) => data.clients.find((c) => c.id === id)?.nom;
   const chantierName = (id?: string) => data.chantiers.find((c) => c.id === id)?.nom;
+
+  // Construit la référence structurée à partir des paramètres courants.
+  const buildRef = (lot = lotCode, ver = version, clientId = form.clientId, chantierId = form.chantierId) => {
+    const ch = data.chantiers.find((c) => c.id === chantierId);
+    const cl = data.clients.find((c) => c.id === clientId);
+    return buildReference({
+      typeCode: lot,
+      projet: ch?.reference || ch?.nom,
+      client: cl?.nom,
+      date: new Date().toISOString(),
+      version: ver,
+    });
+  };
 
   const filtered = data.documents.filter((d) => {
     const matchCat = tab === 'ALL' || d.categorie === tab;
@@ -56,7 +73,9 @@ export default function Documents() {
   ];
 
   const openNew = () => {
-    setForm(empty);
+    setLotCode('GEN');
+    setVersion(0);
+    setForm({ ...empty, reference: buildReference({ typeCode: 'GEN', date: new Date().toISOString(), version: 0 }) });
     setFile(null);
     setModal(true);
   };
@@ -139,7 +158,7 @@ export default function Documents() {
                         </span>
                         <div>
                           <div className="cell-strong">{d.titre}</div>
-                          <div className="cell-sub">.{d.type}</div>
+                          <div className="cell-sub">{d.reference ? `${d.reference} · ` : ''}.{d.type}</div>
                         </div>
                       </div>
                     </td>
@@ -199,17 +218,65 @@ export default function Documents() {
           </div>
           <div className="field">
             <label>Client</label>
-            <select value={form.clientId} onChange={(e) => set('clientId', e.target.value)}>
+            <select
+              value={form.clientId}
+              onChange={(e) => {
+                const v = e.target.value;
+                setForm((f) => ({ ...f, clientId: v, reference: buildRef(lotCode, version, v, f.chantierId) }));
+              }}
+            >
               <option value="">— Aucun —</option>
               {data.clients.map((c) => <option key={c.id} value={c.id}>{c.nom}</option>)}
             </select>
           </div>
           <div className="field">
-            <label>Chantier</label>
-            <select value={form.chantierId} onChange={(e) => set('chantierId', e.target.value)}>
+            <label>Projet / chantier</label>
+            <select
+              value={form.chantierId}
+              onChange={(e) => {
+                const v = e.target.value;
+                setForm((f) => ({ ...f, chantierId: v, reference: buildRef(lotCode, version, f.clientId, v) }));
+              }}
+            >
               <option value="">— Aucun —</option>
               {data.chantiers.map((c) => <option key={c.id} value={c.id}>{c.nom}</option>)}
             </select>
+          </div>
+          <div className="field">
+            <label>Type de lot / prestation</label>
+            <select
+              value={lotCode}
+              onChange={(e) => {
+                const v = e.target.value;
+                setLotCode(v);
+                setForm((f) => ({ ...f, reference: buildRef(v, version, f.clientId, f.chantierId) }));
+              }}
+            >
+              {LOT_TYPES.map((l) => <option key={l.code} value={l.code}>{l.code} — {l.label}</option>)}
+            </select>
+          </div>
+          <div className="field">
+            <label>Version</label>
+            <input
+              type="number"
+              min={0}
+              value={version}
+              onChange={(e) => {
+                const n = Math.max(0, Number(e.target.value));
+                setVersion(n);
+                setForm((f) => ({ ...f, reference: buildRef(lotCode, n, f.clientId, f.chantierId) }));
+              }}
+            />
+          </div>
+          <div className="field field--full">
+            <label>Référence (automatique)</label>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <input style={{ flex: 1 }} value={form.reference ?? ''} onChange={(e) => set('reference', e.target.value)} />
+              <button type="button" className="btn btn--ghost btn--sm" onClick={() => set('reference', buildRef())} title="Régénérer la référence">
+                <Icon name="settings" size={14} /> Régénérer
+              </button>
+            </div>
+            <span className="cell-sub">Format : TYPE-PROJET-CLIENT-AAMMJJ-Vx (modifiable).</span>
           </div>
           <div className="field field--full">
             <label>Fichier</label>

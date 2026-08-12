@@ -101,6 +101,7 @@ const schema = a.schema({
   Document: a
     .model({
       titre: a.string().required(),
+      reference: a.string(), // référence structurée (TYPE-PROJET-CLIENT-DATE-Vx)
       categorie: a.enum(['PLAN', 'RAPPORT', 'NOTE_CALCUL', 'ADMINISTRATIF', 'PHOTO', 'AUTRE']),
       type: a.string(), // extension / mime
       url: a.string(),

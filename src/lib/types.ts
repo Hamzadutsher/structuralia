@@ -107,6 +107,8 @@ export type DocumentCategorie =
 
 export interface Document extends BaseEntity {
   titre: string;
+  /** Référence structurée auto (TYPE-PROJET-CLIENT-DATE-Vx). */
+  reference?: string;
   categorie: DocumentCategorie;
   type?: string;
   url?: string;
