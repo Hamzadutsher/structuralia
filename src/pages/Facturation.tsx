@@ -12,7 +12,7 @@ import { useToast } from '@/components/ui/Toast';
 import { useCan } from '@/lib/roles';
 import { exportDevisPdf, exportFacturePdf, exportRelancePdf } from '@/lib/pdf';
 import { LignesEditor, totalHT } from '@/components/ui/LignesEditor';
-import { catalogLignes, prestationToLigne } from '@/lib/catalog';
+import { catalogLignes, prestationToLigne, villaLignes } from '@/lib/catalog';
 import { CatalogPicker } from '@/components/CatalogPicker';
 import { SituationFacturation } from '@/components/SituationFacturation';
 import { exportConventionPdf } from '@/lib/convention-doc';
@@ -382,6 +382,14 @@ function DevisTab({ goToFactures }: { goToFactures: () => void }) {
                 >
                   <Icon name="devis" size={14} /> Modèle complet
                 </button>
+                <button
+                  type="button"
+                  className="btn btn--ghost btn--sm"
+                  onClick={() => set('lignes', villaLignes())}
+                  title="Prestations types pour une maison individuelle"
+                >
+                  <Icon name="building" size={14} /> Modèle villa
+                </button>
               </div>
             </div>
             <LignesEditor value={form.lignes} onChange={(lignes) => set('lignes', lignes)} tauxTVA={form.tauxTVA} remisePourcent={form.remisePourcent} />
@@ -662,6 +670,14 @@ function FacturesTab() {
                   title="Charger tout le catalogue de prestations"
                 >
                   <Icon name="devis" size={14} /> Modèle complet
+                </button>
+                <button
+                  type="button"
+                  className="btn btn--ghost btn--sm"
+                  onClick={() => set('lignes', villaLignes())}
+                  title="Prestations types pour une maison individuelle"
+                >
+                  <Icon name="building" size={14} /> Modèle villa
                 </button>
               </div>
             </div>

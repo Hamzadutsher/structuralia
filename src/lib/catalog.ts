@@ -51,6 +51,21 @@ export function prestationToLigne(p: Prestation): LigneDevis {
 /** Sections standard proposées lors de la saisie d'une prestation. */
 export const SECTIONS_STANDARD = [SECTION_ETUDE, SECTION_SUIVI, SECTION_RAPPORTS];
 
+/**
+ * Modèle « maison individuelle / villa » — jeu de prestations allégé et
+ * adapté aux clients particuliers (construction de maisons individuelles).
+ */
+export const VILLA_PRESET: LigneDevis[] = [
+  { section: SECTION_ETUDE, designation: 'Étude technique structure béton armé — villa', unite: 'F', quantite: 1, prixUnitaire: 8000 },
+  { section: SECTION_ETUDE, designation: 'Plans d’exécution (coffrage + ferraillage)', unite: 'U', quantite: 1, prixUnitaire: 4000 },
+  { section: SECTION_ETUDE, designation: 'Note de calcul de structure', unite: 'U', quantite: 1, prixUnitaire: 3000 },
+  { section: SECTION_SUIVI, designation: 'Suivi et réceptions de chantier — structure', unite: 'U', quantite: 1, prixUnitaire: 5000 },
+];
+
+export function villaLignes(): LigneDevis[] {
+  return VILLA_PRESET.map((l) => ({ ...l }));
+}
+
 /** Répartition standard des honoraires (échéancier du contrat). */
 export interface EcheanceHonoraire {
   libelle: string;
