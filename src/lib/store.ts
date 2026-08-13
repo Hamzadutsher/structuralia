@@ -3,6 +3,7 @@ import type { AppData, EntityKey } from './types';
 import { seedData } from './seed';
 import { isBackendConfigured } from './amplify';
 import * as backend from './amplifyData';
+import { logChange } from './journal';
 
 /**
  * Store applicatif réactif, avec deux implémentations transparentes :
@@ -63,9 +64,36 @@ function persist(data: AppData) {
   }
 }
 
+const AUTOBACKUP_KEY = 'structuralia:autobackup';
+let autoTimer: ReturnType<typeof setTimeout> | null = null;
+
+/** Écrit une sauvegarde automatique (débattue) dans le localStorage. */
+function scheduleAutoBackup() {
+  if (isBackendConfigured) return;
+  if (autoTimer) clearTimeout(autoTimer);
+  autoTimer = setTimeout(() => {
+    try {
+      localStorage.setItem(AUTOBACKUP_KEY, JSON.stringify({ time: new Date().toISOString(), data: state }));
+    } catch {
+      /* quota : ignore */
+    }
+  }, 2000);
+}
+
+export function getAutoBackup(): { time: string; data: AppData } | null {
+  try {
+    const raw = localStorage.getItem(AUTOBACKUP_KEY);
+    if (raw) return JSON.parse(raw) as { time: string; data: AppData };
+  } catch {
+    /* ignore */
+  }
+  return null;
+}
+
 function emit() {
   state = { ...state };
   persist(state);
+  scheduleAutoBackup();
   listeners.forEach((l) => l());
 }
 
@@ -100,6 +128,7 @@ export const store = {
     const record = { ...(item as object), id: tempId, createdAt: now, updatedAt: now } as AppData[K][number];
     state[key] = [record, ...getArr(key)] as AppData[K];
     emit();
+    logChange('create', key, tempId);
 
     if (isBackendConfigured) {
       backend
@@ -128,6 +157,7 @@ export const store = {
         : r,
     ) as AppData[K];
     emit();
+    logChange('update', key, id);
 
     if (isBackendConfigured) {
       backend.updateRecord(key, id, patch as Record<string, unknown>).catch(() => {});
@@ -137,6 +167,7 @@ export const store = {
   remove<K extends EntityKey>(key: K, id: string) {
     state[key] = getArr(key).filter((r) => (r as { id: string }).id !== id) as AppData[K];
     emit();
+    logChange('delete', key, id);
 
     if (isBackendConfigured) {
       backend.deleteRecord(key, id).catch(() => {});
@@ -162,21 +193,22 @@ export const store = {
    * en mode « merge », fusionne par collection avec dédoublonnage par id
    * (les enregistrements importés priment).
    */
-  importAll(data: Partial<AppData>, mode: 'replace' | 'merge' = 'replace') {
-    const base = emptyData();
-    if (mode === 'replace') {
-      state = { ...base, ...data } as AppData;
-    } else {
-      const next = { ...state } as Record<string, unknown[]>;
-      (Object.keys(base) as EntityKey[]).forEach((k) => {
-        const incoming = (data[k] as unknown[]) ?? [];
+  importAll(data: Partial<AppData>, mode: 'replace' | 'merge' = 'replace', collections?: EntityKey[]) {
+    const keys = collections ?? (Object.keys(emptyData()) as EntityKey[]);
+    const next = { ...state } as Record<string, unknown[]>;
+    keys.forEach((k) => {
+      const incoming = (data[k] as unknown[]) ?? [];
+      if (mode === 'replace') {
+        next[k] = incoming;
+      } else {
         const current = (state[k] as unknown[]) ?? [];
         const ids = new Set(incoming.map((r) => (r as { id: string }).id));
         next[k] = [...incoming, ...current.filter((r) => !ids.has((r as { id: string }).id))];
-      });
-      state = next as unknown as AppData;
-    }
+      }
+    });
+    state = next as unknown as AppData;
     persist(state);
+    scheduleAutoBackup();
     listeners.forEach((l) => l());
   },
 };

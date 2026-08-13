@@ -1,8 +1,11 @@
 import { useRef, useState } from 'react';
-import { store, useData } from '@/lib/store';
-import type { AppData } from '@/lib/types';
+import { store, useData, getAutoBackup } from '@/lib/store';
+import type { AppData, EntityKey } from '@/lib/types';
 import { toCsv, downloadText } from '@/lib/csv';
+import { humanize } from '@/lib/format';
+import { getJournal, clearJournal, type JournalAction } from '@/lib/journal';
 import { PageHead, StatCard } from '@/components/ui/Page';
+import { Badge } from '@/components/ui/Badge';
 import { Modal } from '@/components/ui/Modal';
 import { Icon } from '@/components/ui/Icon';
 import { useToast } from '@/components/ui/Toast';
@@ -30,8 +33,14 @@ export default function Donnees() {
   const can = useCan();
   const fileRef = useRef<HTMLInputElement>(null);
   const [pending, setPending] = useState<Partial<AppData> | null>(null);
+  const [selKeys, setSelKeys] = useState<EntityKey[]>([]);
 
   const total = COLLECTIONS.reduce((s, c) => s + (data[c.key]?.length ?? 0), 0);
+  const auto = getAutoBackup();
+  const journal = getJournal();
+  const dt = (iso: string) => new Date(iso).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' });
+  const ACTION_TONE: Record<JournalAction, 'success' | 'info' | 'danger'> = { create: 'success', update: 'info', delete: 'danger' };
+  const ACTION_LABEL: Record<JournalAction, string> = { create: 'Création', update: 'Modif.', delete: 'Suppr.' };
 
   // --- Sauvegarde complète (JSON) ---
   const exporterJSON = () => {
@@ -51,15 +60,24 @@ export default function Donnees() {
         return;
       }
       setPending(payload);
+      setSelKeys(COLLECTIONS.map((c) => c.key).filter((k) => ((payload[k] as unknown[])?.length ?? 0) > 0));
     } catch {
       toast('Lecture du fichier impossible (JSON invalide).', 'danger');
     }
   };
   const restaurer = (mode: 'replace' | 'merge') => {
-    if (!pending) return;
-    store.importAll(pending, mode);
+    if (!pending || selKeys.length === 0) return;
+    store.importAll(pending, mode, selKeys);
     setPending(null);
     toast(mode === 'replace' ? 'Base restaurée (remplacement).' : 'Données fusionnées.', 'success');
+  };
+  const toggleKey = (k: EntityKey) => setSelKeys((s) => (s.includes(k) ? s.filter((x) => x !== k) : [...s, k]));
+
+  const restaurerAuto = () => {
+    if (!auto) return;
+    if (!confirm('Restaurer la dernière sauvegarde automatique ? Les données actuelles seront remplacées.')) return;
+    store.importAll(auto.data, 'replace');
+    toast('Sauvegarde automatique restaurée.', 'success');
   };
 
   // --- Exports CSV ---
@@ -129,6 +147,16 @@ export default function Donnees() {
                 }}
               />
             </div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginTop: 14, paddingTop: 14, borderTop: '1px solid var(--border)', flexWrap: 'wrap' }}>
+              <span className="cell-sub">
+                <Icon name="clock" size={13} /> Sauvegarde automatique : {auto ? dt(auto.time) : 'aucune'}
+              </span>
+              {auto && (
+                <button className="btn btn--ghost btn--sm" onClick={restaurerAuto}>
+                  <Icon name="download" size={14} /> Restaurer l’auto-sauvegarde
+                </button>
+              )}
+            </div>
           </div>
 
           {/* Exports CSV */}
@@ -176,6 +204,38 @@ export default function Donnees() {
         </div>
       </div>
 
+      {/* Journal des modifications */}
+      <div className="card card--pad" style={{ marginTop: 20 }}>
+        <div className="section-title">
+          <Icon name="clock" size={18} /> Journal des modifications
+          <span className="tab__count" style={{ marginLeft: 8 }}>{journal.length}</span>
+          {journal.length > 0 && (
+            <button className="btn btn--ghost btn--sm" style={{ marginLeft: 'auto' }} onClick={() => { clearJournal(); toast('Journal effacé.', 'success'); }}>
+              <Icon name="trash" size={13} /> Effacer
+            </button>
+          )}
+        </div>
+        {journal.length === 0 ? (
+          <p className="cell-sub">Aucune modification enregistrée.</p>
+        ) : (
+          <div className="table-wrap" style={{ maxHeight: 320, overflowY: 'auto' }}>
+            <table className="data">
+              <thead><tr><th style={{ width: 150 }}>Date</th><th style={{ width: 110 }}>Action</th><th>Collection</th><th>Identifiant</th></tr></thead>
+              <tbody>
+                {journal.slice(0, 50).map((e, i) => (
+                  <tr key={i}>
+                    <td className="cell-sub">{dt(e.time)}</td>
+                    <td><Badge tone={ACTION_TONE[e.action]}>{ACTION_LABEL[e.action]}</Badge></td>
+                    <td>{humanize(e.entity)}</td>
+                    <td className="cell-sub">{e.id}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
       {/* Choix du mode de restauration */}
       <Modal
         open={!!pending}
@@ -191,14 +251,18 @@ export default function Donnees() {
       >
         {pending && (
           <div>
-            <p style={{ marginBottom: 14 }}>La sauvegarde contient :</p>
+            <p style={{ marginBottom: 12 }}>Collections à restaurer <span className="cell-sub">({selKeys.length} sélectionnée(s))</span> :</p>
             <div className="detail-grid">
-              {COLLECTIONS.filter((c) => (pending[c.key]?.length ?? 0) > 0).map((c) => (
-                <div key={c.key} className="detail"><label>{c.label}</label><div>{pending[c.key]?.length ?? 0}</div></div>
+              {COLLECTIONS.filter((c) => ((pending[c.key] as unknown[])?.length ?? 0) > 0).map((c) => (
+                <label key={c.key} className="detail" style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
+                  <input type="checkbox" checked={selKeys.includes(c.key as EntityKey)} onChange={() => toggleKey(c.key as EntityKey)} />
+                  <span style={{ flex: 1 }}>{c.label}</span>
+                  <b>{(pending[c.key] as unknown[])?.length ?? 0}</b>
+                </label>
               ))}
             </div>
             <p className="cell-sub" style={{ marginTop: 16 }}>
-              <b>Remplacer tout</b> : écrase les données actuelles. <b>Fusionner</b> : ajoute les enregistrements manquants (dédoublonnage par identifiant).
+              <b>Remplacer tout</b> : écrase les collections sélectionnées. <b>Fusionner</b> : ajoute les enregistrements manquants (dédoublonnage par identifiant). Les collections non cochées ne sont pas touchées.
             </p>
           </div>
         )}
