@@ -149,6 +149,36 @@ export const store = {
     persist(state);
     listeners.forEach((l) => l());
   },
+
+  /** Vide totalement la base (toutes les collections). */
+  clear() {
+    state = emptyData();
+    persist(state);
+    listeners.forEach((l) => l());
+  },
+
+  /**
+   * Restaure des données (sauvegarde). En mode « replace », remplace tout ;
+   * en mode « merge », fusionne par collection avec dédoublonnage par id
+   * (les enregistrements importés priment).
+   */
+  importAll(data: Partial<AppData>, mode: 'replace' | 'merge' = 'replace') {
+    const base = emptyData();
+    if (mode === 'replace') {
+      state = { ...base, ...data } as AppData;
+    } else {
+      const next = { ...state } as Record<string, unknown[]>;
+      (Object.keys(base) as EntityKey[]).forEach((k) => {
+        const incoming = (data[k] as unknown[]) ?? [];
+        const current = (state[k] as unknown[]) ?? [];
+        const ids = new Set(incoming.map((r) => (r as { id: string }).id));
+        next[k] = [...incoming, ...current.filter((r) => !ids.has((r as { id: string }).id))];
+      });
+      state = next as unknown as AppData;
+    }
+    persist(state);
+    listeners.forEach((l) => l());
+  },
 };
 
 /** Chargement initial depuis Amplify Data (mode backend uniquement). */

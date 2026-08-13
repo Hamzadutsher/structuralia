@@ -19,6 +19,7 @@ const Membres = lazy(() => import('@/pages/Membres'));
 const ProjectDetail = lazy(() => import('@/pages/ProjectDetail'));
 const Catalogue = lazy(() => import('@/pages/Catalogue'));
 const Comptabilite = lazy(() => import('@/pages/Comptabilite'));
+const Donnees = lazy(() => import('@/pages/Donnees'));
 const Poteau = lazy(() => import('@/pages/Poteau'));
 const PoteauFC = lazy(() => import('@/pages/PoteauFC'));
 const Poutre = lazy(() => import('@/pages/Poutre'));
@@ -44,6 +45,7 @@ function Router({ userName, onLogout }: { userName: string; onLogout?: () => voi
             <Route path="/documents" element={<Documents />} />
             <Route path="/catalogue" element={<Catalogue />} />
             <Route path="/comptabilite" element={<Comptabilite />} />
+            <Route path="/donnees" element={<Donnees />} />
             <Route path="/chantiers" element={<Chantiers />} />
             <Route path="/projets/:id" element={<ProjectDetail />} />
             <Route path="/suivi" element={<Suivi />} />
