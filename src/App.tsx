@@ -1,7 +1,8 @@
-import { lazy, Suspense, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { ToastProvider } from '@/components/ui/Toast';
+import { setJournalUser } from '@/lib/journal';
 import { DemoLogin } from '@/components/DemoLogin';
 import { RoleProvider } from '@/lib/roles';
 import type { Role } from '@/lib/types';
@@ -33,6 +34,9 @@ const Escalier = lazy(() => import('@/pages/Escalier'));
 const SemelleFilante = lazy(() => import('@/pages/SemelleFilante'));
 
 function Router({ userName, onLogout }: { userName: string; onLogout?: () => void }) {
+  useEffect(() => {
+    setJournalUser(userName);
+  }, [userName]);
   return (
     <ToastProvider>
       <Suspense fallback={<div style={{ padding: 40 }}>Chargement…</div>}>

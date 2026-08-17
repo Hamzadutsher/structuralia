@@ -34,10 +34,13 @@ export default function Donnees() {
   const fileRef = useRef<HTMLInputElement>(null);
   const [pending, setPending] = useState<Partial<AppData> | null>(null);
   const [selKeys, setSelKeys] = useState<EntityKey[]>([]);
+  const [jEntity, setJEntity] = useState('');
+  const [jAction, setJAction] = useState('');
 
   const total = COLLECTIONS.reduce((s, c) => s + (data[c.key]?.length ?? 0), 0);
   const auto = getAutoBackup();
-  const journal = getJournal();
+  const journal = getJournal().filter((e) => (!jEntity || e.entity === jEntity) && (!jAction || e.action === jAction));
+  const journalEntities = [...new Set(getJournal().map((e) => e.entity))];
   const dt = (iso: string) => new Date(iso).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' });
   const ACTION_TONE: Record<JournalAction, 'success' | 'info' | 'danger'> = { create: 'success', update: 'info', delete: 'danger' };
   const ACTION_LABEL: Record<JournalAction, string> = { create: 'Création', update: 'Modif.', delete: 'Suppr.' };
@@ -209,24 +212,37 @@ export default function Donnees() {
         <div className="section-title">
           <Icon name="clock" size={18} /> Journal des modifications
           <span className="tab__count" style={{ marginLeft: 8 }}>{journal.length}</span>
-          {journal.length > 0 && (
-            <button className="btn btn--ghost btn--sm" style={{ marginLeft: 'auto' }} onClick={() => { clearJournal(); toast('Journal effacé.', 'success'); }}>
-              <Icon name="trash" size={13} /> Effacer
-            </button>
-          )}
+          <div style={{ marginLeft: 'auto', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <select className="select" value={jEntity} onChange={(e) => setJEntity(e.target.value)}>
+              <option value="">Toutes collections</option>
+              {journalEntities.map((k) => <option key={k} value={k}>{humanize(k)}</option>)}
+            </select>
+            <select className="select" value={jAction} onChange={(e) => setJAction(e.target.value)}>
+              <option value="">Toutes actions</option>
+              <option value="create">Création</option>
+              <option value="update">Modification</option>
+              <option value="delete">Suppression</option>
+            </select>
+            {getJournal().length > 0 && (
+              <button className="btn btn--ghost btn--sm" onClick={() => { clearJournal(); toast('Journal effacé.', 'success'); }}>
+                <Icon name="trash" size={13} /> Effacer
+              </button>
+            )}
+          </div>
         </div>
         {journal.length === 0 ? (
-          <p className="cell-sub">Aucune modification enregistrée.</p>
+          <p className="cell-sub">Aucune modification enregistrée{jEntity || jAction ? ' pour ce filtre' : ''}.</p>
         ) : (
-          <div className="table-wrap" style={{ maxHeight: 320, overflowY: 'auto' }}>
+          <div className="table-wrap" style={{ maxHeight: 340, overflowY: 'auto' }}>
             <table className="data">
-              <thead><tr><th style={{ width: 150 }}>Date</th><th style={{ width: 110 }}>Action</th><th>Collection</th><th>Identifiant</th></tr></thead>
+              <thead><tr><th style={{ width: 140 }}>Date</th><th style={{ width: 100 }}>Action</th><th>Collection</th><th>Utilisateur</th><th>Identifiant</th></tr></thead>
               <tbody>
-                {journal.slice(0, 50).map((e, i) => (
+                {journal.slice(0, 60).map((e, i) => (
                   <tr key={i}>
                     <td className="cell-sub">{dt(e.time)}</td>
                     <td><Badge tone={ACTION_TONE[e.action]}>{ACTION_LABEL[e.action]}</Badge></td>
                     <td>{humanize(e.entity)}</td>
+                    <td>{e.user || '—'}</td>
                     <td className="cell-sub">{e.id}</td>
                   </tr>
                 ))}

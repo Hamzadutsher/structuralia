@@ -12,12 +12,19 @@ export interface JournalEntry {
   action: JournalAction;
   entity: EntityKey;
   id: string;
+  user?: string;
 }
 
 const KEY = 'structuralia:journal';
 const MAX = 300;
 
 let entries: JournalEntry[] = load();
+let currentUser = '';
+
+/** Définit l'utilisateur courant (attribué aux entrées du journal). */
+export function setJournalUser(name: string): void {
+  currentUser = name;
+}
 
 function load(): JournalEntry[] {
   try {
@@ -30,7 +37,7 @@ function load(): JournalEntry[] {
 }
 
 export function logChange(action: JournalAction, entity: EntityKey, id: string): void {
-  entries = [{ time: new Date().toISOString(), action, entity, id }, ...entries].slice(0, MAX);
+  entries = [{ time: new Date().toISOString(), action, entity, id, user: currentUser || undefined }, ...entries].slice(0, MAX);
   try {
     localStorage.setItem(KEY, JSON.stringify(entries));
   } catch {
