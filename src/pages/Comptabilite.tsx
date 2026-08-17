@@ -10,6 +10,7 @@ import { BarList, type BarItem } from '@/components/ui/BarList';
 import { Icon } from '@/components/ui/Icon';
 import { useToast } from '@/components/ui/Toast';
 import { useCan } from '@/lib/roles';
+import { getSettings } from '@/lib/settings';
 
 const TYPES: DepenseType[] = ['ACHAT', 'DEPLACEMENT', 'CHARGE'];
 const CATS: DepenseCategorie[] = [
@@ -91,7 +92,12 @@ export default function Comptabilite() {
 
   const openNew = () => {
     setEditing(null);
-    setForm({ ...empty, date: `${exercice}-${String(new Date().getMonth() + 1).padStart(2, '0')}-01` });
+    setForm({
+      ...empty,
+      date: `${exercice}-${String(new Date().getMonth() + 1).padStart(2, '0')}-01`,
+      tauxTVA: getSettings().tvaDefaut,
+      tauxKm: getSettings().baremeKm,
+    });
     setModal(true);
   };
   const openEdit = (d: Depense) => {
@@ -249,7 +255,7 @@ export default function Comptabilite() {
               value={form.type}
               onChange={(e) => {
                 const t = e.target.value as DepenseType;
-                setForm((f) => ({ ...f, type: t, tauxKm: t === 'DEPLACEMENT' && !f.tauxKm ? BAREME_KM_DEFAUT : f.tauxKm }));
+                setForm((f) => ({ ...f, type: t, tauxKm: t === 'DEPLACEMENT' && !f.tauxKm ? getSettings().baremeKm : f.tauxKm }));
               }}
             >
               {TYPES.map((t) => <option key={t} value={t}>{TYPE_LABEL[t]}</option>)}

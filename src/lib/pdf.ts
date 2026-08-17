@@ -1,7 +1,6 @@
 import type { Client, Devis, Facture, LigneDevis } from './types';
 import { eur, formatDate } from './format';
-import { COMPANY, COMPANY_LEGAL_FOOTER, COMPANY_CONTACT_FOOTER } from './company';
-import { LETTERHEAD_LOGO } from './letterhead';
+import { getSettings, companyFooters } from './settings';
 
 /**
  * Génère un document imprimable (devis ou facture) et ouvre la boîte
@@ -62,6 +61,9 @@ function renderLignes(doc: DocLike): { rows: string; ht: number } {
 }
 
 function buildHtml(kind: Kind, doc: DocLike, client?: Client): string {
+  const c = getSettings().company;
+  const logo = getSettings().letterheadLogo;
+  const foot = companyFooters();
   const title = kind === 'devis' ? 'DEVIS' : 'FACTURE';
   const { rows, ht } = renderLignes(doc);
   const brut = ht || doc.montantHT;
@@ -120,9 +122,9 @@ function buildHtml(kind: Kind, doc: DocLike, client?: Client): string {
 <body>
   <div class="head">
     <div class="brand">
-      <img class="logo-img" src="${LETTERHEAD_LOGO}" alt="STRUCTURALIA" />
-      <div class="act">${escapeHtml(COMPANY.activite.toUpperCase())}</div>
-      <div class="spec">${escapeHtml(COMPANY.specialites)}</div>
+      <img class="logo-img" src="${logo}" alt="${escapeHtml(c.nom)}" />
+      <div class="act">${escapeHtml(c.activite.toUpperCase())}</div>
+      <div class="spec">${escapeHtml(c.specialites)}</div>
     </div>
     <div class="doc-title">
       <h1>${title}</h1>
@@ -136,10 +138,10 @@ function buildHtml(kind: Kind, doc: DocLike, client?: Client): string {
   <div class="parties">
     <div class="bloc">
       <label>Émetteur</label>
-      <div class="n">${escapeHtml(COMPANY.nom)}</div>
-      <div>${escapeHtml(COMPANY.adresse)}</div>
-      <div>ICE ${escapeHtml(COMPANY.ice)} · RC ${escapeHtml(COMPANY.rc)}</div>
-      <div>${escapeHtml(COMPANY.email)} · ${escapeHtml(COMPANY.mobile)}</div>
+      <div class="n">${escapeHtml(c.nom)}</div>
+      <div>${escapeHtml(c.adresse)}</div>
+      <div>ICE ${escapeHtml(c.ice)} · RC ${escapeHtml(c.rc)}</div>
+      <div>${escapeHtml(c.email)} · ${escapeHtml(c.mobile)}</div>
     </div>
     <div class="bloc">
       <label>Client</label>
@@ -171,7 +173,7 @@ function buildHtml(kind: Kind, doc: DocLike, client?: Client): string {
 
   ${doc.notes ? `<div class="notes">${escapeHtml(doc.notes)}</div>` : ''}
 
-  <div class="foot">${escapeHtml(COMPANY_LEGAL_FOOTER)}<br>${escapeHtml(COMPANY_CONTACT_FOOTER)}</div>
+  <div class="foot">${escapeHtml(foot.legal)}<br>${escapeHtml(foot.contact)}</div>
 </body></html>`;
 }
 

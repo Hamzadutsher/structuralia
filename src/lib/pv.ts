@@ -1,7 +1,6 @@
 import { printHtml, escapeHtml } from './pdf';
 import { formatDate } from './format';
-import { LETTERHEAD_LOGO } from './letterhead';
-import { COMPANY, COMPANY_LEGAL_FOOTER, COMPANY_CONTACT_FOOTER } from './company';
+import { getSettings, companyFooters } from './settings';
 
 /**
  * Génération des documents de contrôle du bureau d'études (phase suivi de chantier) :
@@ -134,8 +133,8 @@ function header(d: PvData): string {
   return `
   <div class="head">
     <div class="brand">
-      <img class="logo-img" src="${LETTERHEAD_LOGO}" alt="STRUCTURALIA" />
-      <div><small>${escapeHtml(COMPANY.activite.toUpperCase())}</small></div>
+      <img class="logo-img" src="${getSettings().letterheadLogo}" alt="${escapeHtml(getSettings().company.nom)}" />
+      <div><small>${escapeHtml(getSettings().company.activite.toUpperCase())}</small></div>
     </div>
     <div class="doc-title">
       <h1>${escapeHtml(PV_LABELS[d.type].toUpperCase())}</h1>
@@ -310,7 +309,7 @@ function buildHtml(d: PvData): string {
     <div><label>Pour l'entreprise / le client</label><div class="line">Nom, date et signature</div></div>
     <div><label>Le contrôleur — STRUCTURALIA</label><div class="line">${escapeHtml(d.controleur ?? '')}</div></div>
   </div>
-  <div class="foot">${escapeHtml(PV_LABELS[d.type])} · ${escapeHtml(d.reference)} · établi le ${formatDate(d.date)}<br>${escapeHtml(COMPANY_LEGAL_FOOTER)}<br>${escapeHtml(COMPANY_CONTACT_FOOTER)}</div>
+  <div class="foot">${escapeHtml(PV_LABELS[d.type])} · ${escapeHtml(d.reference)} · établi le ${formatDate(d.date)}<br>${escapeHtml(companyFooters().legal)}<br>${escapeHtml(companyFooters().contact)}</div>
 </body></html>`;
 }
 

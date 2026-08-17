@@ -1,8 +1,7 @@
 import type { Client, Convention } from './types';
 import { printHtml, escapeHtml } from './pdf';
 import { eur, formatDate } from './format';
-import { COMPANY, COMPANY_LEGAL_FOOTER, COMPANY_CONTACT_FOOTER } from './company';
-import { LETTERHEAD_LOGO } from './letterhead';
+import { getSettings, companyFooters } from './settings';
 import { ECHEANCIER_HONORAIRES } from './catalog';
 
 /**
@@ -44,6 +43,9 @@ function renderPrestations(prestations: Convention['prestations']): string {
 }
 
 export function exportConventionPdf(conv: Convention, client?: Client) {
+  const c = getSettings().company;
+  const logo = getSettings().letterheadLogo;
+  const foot = companyFooters();
   const montant = conv.montant ?? 0;
   const prestationsTable = renderPrestations(conv.prestations);
   const echeancier = ECHEANCIER_HONORAIRES.map(
@@ -94,8 +96,8 @@ export function exportConventionPdf(conv: Convention, client?: Client) {
 <body>
   <div class="band">
     <div class="co">
-      <img class="logo-img" src="${LETTERHEAD_LOGO}" alt="STRUCTURALIA" />
-      <div class="act">${escapeHtml(COMPANY.activite.toUpperCase())}</div>
+      <img class="logo-img" src="${logo}" alt="${escapeHtml(c.nom)}" />
+      <div class="act">${escapeHtml(c.activite.toUpperCase())}</div>
     </div>
   </div>
 
@@ -103,7 +105,7 @@ export function exportConventionPdf(conv: Convention, client?: Client) {
   <div class="projet">PROJET : ${escapeHtml(conv.objet)}</div>
 
   <div class="parties">
-    <p><b>ENTRE</b> : Le Bureau d'Études Techniques (BET) <b>${escapeHtml(COMPANY.nom)}</b>, faisant élection de domicile au ${escapeHtml(COMPANY.adresse)} (ICE ${escapeHtml(COMPANY.ice)}, RC ${escapeHtml(COMPANY.rc)}).<br><i>D'une part,</i></p>
+    <p><b>ENTRE</b> : Le Bureau d'Études Techniques (BET) <b>${escapeHtml(c.nom)}</b>, faisant élection de domicile au ${escapeHtml(c.adresse)} (ICE ${escapeHtml(c.ice)}, RC ${escapeHtml(c.rc)}).<br><i>D'une part,</i></p>
     <p><b>ET</b> : <b>${escapeHtml(client?.nom ?? '…')}</b>${clientDomicile ? `, faisant élection de domicile à ${escapeHtml(clientDomicile)}` : ''}${client?.siret ? ` (RC/ICE : ${escapeHtml(client.siret)})` : ''}.<br><i>D'autre part.</i></p>
   </div>
   <p style="text-align:center"><b>IL A ÉTÉ ARRÊTÉ ET CONVENU CE QUI SUIT :</b></p>
@@ -159,11 +161,11 @@ export function exportConventionPdf(conv: Convention, client?: Client) {
   <p style="text-align:center; margin-top:14px">Fait à Casablanca, le ${formatDate(conv.dateDebut ?? conv.createdAt)}. — <i>Lu et approuvé.</i></p>
 
   <div class="sign">
-    <div><div class="role">Le Bureau d'Études</div><div class="line">${escapeHtml(COMPANY.nom)}</div></div>
+    <div><div class="role">Le Bureau d'Études</div><div class="line">${escapeHtml(c.nom)}</div></div>
     <div><div class="role">Le Client</div><div class="line">${escapeHtml(client?.nom ?? '')}</div></div>
   </div>
 
-  <div class="foot">${escapeHtml(COMPANY_LEGAL_FOOTER)}<br>${escapeHtml(COMPANY_CONTACT_FOOTER)}</div>
+  <div class="foot">${escapeHtml(foot.legal)}<br>${escapeHtml(foot.contact)}</div>
 </body></html>`;
 
   printHtml(html);

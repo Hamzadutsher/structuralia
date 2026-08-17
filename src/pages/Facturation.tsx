@@ -13,6 +13,7 @@ import { useCan } from '@/lib/roles';
 import { exportDevisPdf, exportFacturePdf, exportRelancePdf } from '@/lib/pdf';
 import { LignesEditor, totalHT } from '@/components/ui/LignesEditor';
 import { catalogLignes, prestationToLigne, villaLignes } from '@/lib/catalog';
+import { getSettings } from '@/lib/settings';
 import { CatalogPicker } from '@/components/CatalogPicker';
 import { SituationFacturation } from '@/components/SituationFacturation';
 import { exportConventionPdf } from '@/lib/convention-doc';
@@ -182,6 +183,7 @@ function DevisTab({ goToFactures }: { goToFactures: () => void }) {
       ...emptyDevis,
       reference: `DEV-2026-${100 + data.devis.length + 1}`,
       clientId: data.clients[0]?.id ?? '',
+      tauxTVA: getSettings().tvaDefaut,
       lignes: [{ designation: '', quantite: 1, prixUnitaire: 0 }],
     });
     setModal(true);
@@ -474,6 +476,7 @@ function FacturesTab() {
       ...emptyFacture,
       reference: `FAC-2026-${50 + data.factures.length + 1}`,
       clientId: data.clients[0]?.id ?? '',
+      tauxTVA: getSettings().tvaDefaut,
       lignes: [{ designation: '', quantite: 1, prixUnitaire: 0 }],
     });
     setModal(true);

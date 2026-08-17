@@ -22,6 +22,7 @@ const Catalogue = lazy(() => import('@/pages/Catalogue'));
 const Comptabilite = lazy(() => import('@/pages/Comptabilite'));
 const Donnees = lazy(() => import('@/pages/Donnees'));
 const Tresorerie = lazy(() => import('@/pages/Tresorerie'));
+const Parametres = lazy(() => import('@/pages/Parametres'));
 const Poteau = lazy(() => import('@/pages/Poteau'));
 const PoteauFC = lazy(() => import('@/pages/PoteauFC'));
 const Poutre = lazy(() => import('@/pages/Poutre'));
@@ -52,6 +53,7 @@ function Router({ userName, onLogout }: { userName: string; onLogout?: () => voi
             <Route path="/comptabilite" element={<Comptabilite />} />
             <Route path="/tresorerie" element={<Tresorerie />} />
             <Route path="/donnees" element={<Donnees />} />
+            <Route path="/parametres" element={<Parametres />} />
             <Route path="/chantiers" element={<Chantiers />} />
             <Route path="/projets/:id" element={<ProjectDetail />} />
             <Route path="/suivi" element={<Suivi />} />
