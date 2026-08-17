@@ -64,6 +64,7 @@ export const NAV: NavCategory[] = [
     title: 'Administration',
     links: [
       { to: '/comptabilite', label: 'Comptabilité', icon: 'euro', perm: 'canManageFacturation' },
+      { to: '/tresorerie', label: 'Trésorerie', icon: 'trending', perm: 'canManageFacturation' },
       { to: '/donnees', label: 'Base de données', icon: 'folder', perm: 'canManageMembers' },
       { to: '/membres', label: 'Membres & rôles', icon: 'settings', perm: 'canManageMembers' },
     ],
@@ -82,6 +83,7 @@ export const PAGE_TITLES: Record<string, string> = {
   '/suivi': 'Suivi des travaux',
   '/membres': 'Membres & rôles',
   '/comptabilite': 'Comptabilité interne',
+  '/tresorerie': 'Trésorerie & échéancier',
   '/donnees': 'Base de données',
   '/calcul': 'Études & calculs',
   '/calcul/poteau': 'Poteau BA — BAEL 91',
