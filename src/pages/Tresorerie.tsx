@@ -5,13 +5,27 @@ import { eur, eurShort, formatDate, daysUntil } from '@/lib/format';
 import { PageHead, StatCard } from '@/components/ui/Page';
 import { StatusBadge } from '@/components/ui/Badge';
 import { Icon } from '@/components/ui/Icon';
+import { buildRelanceText } from '@/lib/relance';
+import { toCsv, downloadText } from '@/lib/csv';
+import { useToast } from '@/components/ui/Toast';
 
 const MOIS = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
 const monthKey = (iso?: string) => (iso ? iso.slice(0, 7) : '');
 
 export default function Tresorerie() {
   const data = useData();
-  const clientName = (id?: string) => data.clients.find((c) => c.id === id)?.nom ?? '—';
+  const toast = useToast();
+  const clientObj = (id?: string) => data.clients.find((c) => c.id === id);
+  const clientName = (id?: string) => clientObj(id)?.nom ?? '—';
+
+  const relancer = (factureId: string) => {
+    const f = data.factures.find((x) => x.id === factureId);
+    if (!f) return;
+    const client = clientObj(f.clientId);
+    const to = client?.email ?? '';
+    const subject = `Relance — facture ${f.reference}`;
+    window.location.href = `mailto:${to}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(buildRelanceText(f, client))}`;
+  };
 
   const enc = useMemo(() => {
     // Encaissements attendus : factures non soldées (reste dû).
@@ -65,9 +79,25 @@ export default function Tresorerie() {
     });
   }, [enc, dec, kpi.tresorerie]);
 
+  const maxNet = Math.max(1, ...previsionnel.map((m) => Math.abs(m.net)));
+
+  const exporterCsv = () => {
+    const rows = previsionnel.map((m) => [m.label, m.entrees, m.sorties, m.net, m.cumul]);
+    downloadText('previsionnel-tresorerie.csv', toCsv(['Mois', 'Entrées', 'Sorties', 'Net', 'Solde cumulé'], rows));
+    toast('Prévisionnel exporté (CSV).', 'success');
+  };
+
   return (
     <>
-      <PageHead title="Trésorerie & échéancier" subtitle="Encaissements attendus, décaissements et prévisionnel" />
+      <PageHead
+        title="Trésorerie & échéancier"
+        subtitle="Encaissements attendus, décaissements et prévisionnel"
+        actions={
+          <button className="btn btn--ghost" onClick={exporterCsv}>
+            <Icon name="download" size={16} /> Exporter le prévisionnel (CSV)
+          </button>
+        }
+      />
 
       <div className="stat-grid">
         <StatCard icon="euro" value={eurShort(kpi.tresorerie)} label="Trésorerie actuelle" trendUp={kpi.tresorerie >= 0} trend={kpi.tresorerie >= 0 ? 'Positive' : 'Négative'} />
@@ -105,6 +135,25 @@ export default function Tresorerie() {
         </div>
       </div>
 
+      {/* Graphique de flux net */}
+      <div className="card card--pad" style={{ marginBottom: 20 }}>
+        <div className="section-title"><Icon name="trending" size={18} /> Flux net mensuel</div>
+        <div className="barlist">
+          {previsionnel.map((m) => (
+            <div className="barlist__row" key={m.key}>
+              <div className="barlist__label">{m.label}</div>
+              <div className="barlist__track">
+                <div
+                  className="barlist__bar"
+                  style={{ width: `${(Math.abs(m.net) / maxNet) * 100}%`, background: m.net >= 0 ? 'var(--success)' : 'var(--danger)' }}
+                />
+              </div>
+              <div className="barlist__value" style={{ color: m.net >= 0 ? 'var(--success)' : 'var(--danger)' }}>{eurShort(m.net)}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
       <div className="split">
         {/* Encaissements attendus */}
         <div className="card card--pad">
@@ -117,7 +166,7 @@ export default function Tresorerie() {
           ) : (
             <div className="table-wrap">
               <table className="data">
-                <thead><tr><th>Facture</th><th>Client</th><th>Échéance</th><th style={{ textAlign: 'right' }}>Reste dû</th></tr></thead>
+                <thead><tr><th>Facture</th><th>Client</th><th>Échéance</th><th style={{ textAlign: 'right' }}>Reste dû</th><th style={{ width: 44 }}></th></tr></thead>
                 <tbody>
                   {enc.map(({ f, reste, dj }) => (
                     <tr key={f.id}>
@@ -125,6 +174,11 @@ export default function Tresorerie() {
                       <td className="cell-sub">{clientName(f.clientId)}</td>
                       <td className={dj !== null && dj < 0 ? 'echeance-retard' : ''}>{formatDate(f.dateEcheance)}</td>
                       <td style={{ textAlign: 'right' }} className="cell-strong">{eur(reste)}</td>
+                      <td>
+                        <button className="icon-btn" onClick={() => relancer(f.id)} aria-label="Relancer par e-mail" title="Relancer par e-mail">
+                          <Icon name="bell" size={15} />
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
