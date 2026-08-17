@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Icon, type IconName } from '@/components/ui/Icon';
 import { useRole, ROLES, ROLE_LABELS } from '@/lib/roles';
 import { useData } from '@/lib/store';
+import { computeNotifications } from '@/lib/notifications';
 import type { Role } from '@/lib/types';
 
 interface Props {
@@ -25,7 +26,11 @@ export function Topbar({ title, onToggleSidebar, userName, onLogout }: Props) {
   const navigate = useNavigate();
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
   const blurTimer = useRef<number | undefined>(undefined);
+  const notifBlur = useRef<number | undefined>(undefined);
+
+  const notifs = useMemo(() => computeNotifications(data), [data]);
 
   const initials = userName
     .split(' ')
@@ -155,9 +160,34 @@ export function Topbar({ title, onToggleSidebar, userName, onLogout }: Props) {
         ))}
       </select>
 
-      <button className="topbar__toggle" aria-label="Notifications">
-        <Icon name="bell" size={19} />
-      </button>
+      <div className="topbar__notif-wrap" onBlur={() => { notifBlur.current = window.setTimeout(() => setNotifOpen(false), 150); }}>
+        <button
+          className="topbar__toggle"
+          aria-label="Notifications"
+          onClick={() => setNotifOpen((v) => !v)}
+        >
+          <Icon name="bell" size={19} />
+          {notifs.length > 0 && <span className="notif-badge">{notifs.length > 9 ? '9+' : notifs.length}</span>}
+        </button>
+        {notifOpen && (
+          <div className="search-results notif-panel" onMouseDown={() => notifBlur.current && window.clearTimeout(notifBlur.current)}>
+            <div className="notif-head">Notifications <span className="tab__count">{notifs.length}</span></div>
+            {notifs.length === 0 ? (
+              <div className="search-empty">Aucune alerte — tout est à jour.</div>
+            ) : (
+              notifs.slice(0, 15).map((n, i) => (
+                <button key={i} className="search-hit" onClick={() => { navigate(n.to); setNotifOpen(false); }}>
+                  <span className={`notif-dot notif-dot--${n.tone}`}><Icon name={n.icon} size={14} /></span>
+                  <span className="search-hit__text">
+                    <b>{n.label}</b>
+                    <span>{n.sub}</span>
+                  </span>
+                </button>
+              ))
+            )}
+          </div>
+        )}
+      </div>
 
       <div className="topbar__user">
         <div className="topbar__avatar">{initials || 'U'}</div>

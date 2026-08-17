@@ -345,6 +345,52 @@ button {
 .topbar__search-wrap {
   position: relative;
 }
+.topbar__notif-wrap {
+  position: relative;
+}
+.topbar__notif-wrap .topbar__toggle {
+  position: relative;
+}
+.notif-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--danger);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 0 0 2px var(--surface);
+}
+.notif-panel {
+  width: 340px;
+}
+.notif-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px 10px;
+  font-weight: 700;
+  font-size: 13px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 4px;
+}
+.notif-dot {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+.notif-dot--danger { background: var(--danger-bg); color: var(--danger); }
+.notif-dot--warning { background: var(--warning-bg); color: var(--warning); }
+.notif-dot--info { background: var(--info-bg); color: var(--info); }
 .search-results {
   position: absolute;
   top: calc(100% + 8px);
